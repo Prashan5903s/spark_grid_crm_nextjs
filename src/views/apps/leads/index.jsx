@@ -1,0 +1,81 @@
+// MUI Imports
+'use client'
+
+import { useState, useEffect } from 'react'
+
+import { useSession } from 'next-auth/react'
+
+import Typography from '@mui/material/Typography'
+
+import Grid from '@mui/material/Grid2'
+
+import SkeletonTableComponent from '@/components/skeleton/table/page'
+
+import LeadTable from './LeadTable'
+
+const Lead = () => {
+
+  const [leadsData, setLeadsData] = useState();
+  const [loading, setLoading] = useState(false);
+
+  const URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const { data: session } = useSession() || {};
+
+  const token = session && session.user && session?.user?.token;
+
+  async function fetchLeadsData() {
+    try {
+      const response = await fetch(`${URL}/user/leads/data`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        })
+
+      const datas = await response.json();
+
+      if (response.ok) {
+
+        setLoading(true);
+        setLeadsData(datas?.data);
+      } else {
+
+      }
+
+    } catch (error) {
+      throw new Error(error);
+    } finally {
+      setLoading(true);
+    }
+  }
+
+  useEffect(() => {
+    if (URL && token) {
+      fetchLeadsData();
+    }
+  }, [token])
+
+  return (
+    <Grid container spacing={6}>
+      <Grid size={{ xs: 12 }}>
+        <Typography variant='h4' className='mbe-1'>
+          Lead List
+        </Typography>
+      </Grid>
+      <Grid size={{ xs: 12 }}>
+        {leadsData ? (
+          <LeadTable tableData={leadsData} fetchLeadsData={fetchLeadsData} />
+        )
+          : (
+            <SkeletonTableComponent />
+          )
+        }
+      </Grid>
+    </Grid>
+  )
+}
+
+export default Lead

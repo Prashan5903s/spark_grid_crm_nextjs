@@ -23,34 +23,6 @@ import { toast } from 'react-toastify'
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 
-const schema = object({
-    company_name: string(),
-    name: pipe(string(), minLength(1, 'Name is required')),
-    email: pipe(
-        string(),
-        minLength(1, 'Email is required'),
-        regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format')
-    ),
-    phone: pipe(
-        string(),
-        minLength(10, 'Phone is required'),
-        maxLength(15, 'Invalid phone number')
-    ),
-    state_id: optional(any()),
-    city_id: optional(any()),
-    average_monthly_consumption: string(),
-    sanctioned_load: string(),
-    lead_status_id: string(),
-    source_id: string(),
-    solution_id: string(),
-    address: string(),
-    pincode: optional(
-        string(),
-        regex(/^[0-9]+$/, "Only numbers allowed"),
-        maxLength(6, "Maximum 6 digits allowed"),
-    ),
-})
-
 const ProposalDialog = ({
     open,
     setOpen,
@@ -65,18 +37,59 @@ const ProposalDialog = ({
 
     const [createData, setCreateData] = useState();
     const [loading, setLoading] = useState(false)
-    const [selectedStateId, setSelectedStateId] = useState();
-    const [selectedCity, setSelectedCity] = useState([]);
+
+    const [selectedIndustrialSectorId, setSelectedIndustrialSectorId] = useState()
+
+    const schema = object({
+        average_monthly_consumption: pipe(string(), minLength(1, "Average monthly consumption is required")),
+        sanctioned_load: pipe(string(), minLength(1, "Sanctioned load is required")),
+        industrial_sector_id: pipe(string(), minLength(1, "Industrial sector is required")),
+        base_unit_cost: pipe(string(), minLength(1, "Base unit cost is required")),
+        base_unit_cost: pipe(
+            string(),
+            minLength(1, "Base unit cost is required"),
+            regex(/^[0-9]+$/, "Only numbers allowed"),
+            maxLength(6, "Maximum 6 digits allowed"),
+        ),
+        base_unit_solar_rate: selectedIndustrialSectorId === "69c6580065ad315756decec7" ? pipe(
+            string(),
+            minLength(1, "Base unit cost is required"),
+            regex(/^[0-9]+$/, "Only numbers allowed"),
+            maxLength(6, "Maximum 6 digits allowed"),
+        ) : string()
+    })
+
+    const fetchCreate = async () => {
+        try {
+
+            const response = await fetch(`${API_URL}/user/proposal/create/data`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            const value = await response.json()
+
+            if (response.ok) {
+
+                const data = value?.data;
+
+                setCreateData(data);
+            }
+
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
 
     useEffect(() => {
 
-        if (selectedStateId && createData) {
-            const city = createData.states.find(u => String(u.state_id) === selectedStateId)
+        if (API_URL && token) {
 
-            setSelectedCity(city?.cities)
-
+            fetchCreate()
         }
-    }, [selectedStateId, createData])
+
+    }, [API_URL, token])
 
     const {
         control,
@@ -86,61 +99,38 @@ const ProposalDialog = ({
     } = useForm({
         resolver: valibotResolver(schema),
         defaultValues: {
-            company_name: "",
-            name: '',
-            email: '',
-            phone: '',
-            solution_id: "",
-            state_id: '',
-            city_id: '',
-            average_monthly_consumption: '',
-            sanctioned_load: '',
-            lead_status_id: '',
-            source_id: '',
-            address: '',
-            pincode: '',
+            base_unit_cost: "",
+            average_monthly_consumption: "",
+            sanctioned_load: "",
+            industrial_sector_id: '',
+            base_unit_solar_rate: '',
         }
     })
 
     useEffect(() => {
         if (open && selectedLead) {
             reset({
-                name: selectedLead?.name || '',
-                email: selectedLead?.email || '',
-                phone: selectedLead?.phone || '',
-                company_name: selectedLead?.company_name || "",
-                solution_id: selectedLead?.solution_id || "",
                 average_monthly_consumption: selectedLead?.average_monthly_consumption || '',
                 sanctioned_load: selectedLead?.sanctioned_load || '',
-                lead_status_id: selectedLead?.lead_status_id || '',
-                state_id: Number(selectedLead.state_id) || "",
-                city_id: Number(selectedLead?.city_id) || "",
-                source_id: selectedLead?.source_id || '',
-                address: selectedLead?.address || '',
-                pincode: selectedLead?.pincode || '',
+                industrial_sector_id: selectedLead?.industrial_sector_id || '',
+                base_unit_cost: selectedLead?.base_unit_cost || '',
+                base_unit_solar_rate: selectedLead?.base_unit_solar_rate || ""
             })
-            setSelectedStateId(selectedLead?.state_id)
         } else {
 
             reset({
-                company_name: "",
-                name: '',
-                email: '',
-                phone: '',
+                base_unit_cost: "",
                 average_monthly_consumption: '',
                 sanctioned_load: '',
-                lead_status_id: '',
-                state_id: "",
-                city_id: "",
-                solution_id: "",
-                source_id: '',
-                address: '',
-                pincode: '',
+                industrial_sector_id: '',
+                base_unit_solar_rate: ""
             })
         }
     }, [open, selectedLead, reset])
 
     const handleClose = () => {
+
+        setSelectedIndustrialSectorId()
         setOpen(false)
         reset()
     }
@@ -148,29 +138,30 @@ const ProposalDialog = ({
     const submitData = async (values) => {
         setLoading(true)
 
+        const finalValue = {
+            ...selectedLead,
+            ...values
+        }
+
         try {
 
-            const res = await fetch(
-                selectedLead
-                    ? `${API_URL}/user/leads/data/${selectedLead._id}`
-                    : `${API_URL}/user/leads/data`,
+            const res = await fetch(`${API_URL}/user/proposal/post/data`,
                 {
-                    method: selectedLead ? 'PUT' : 'POST',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`
                     },
-                    body: JSON.stringify(values)
+                    body: JSON.stringify(finalValue)
                 }
             )
 
             const data = await res.json()
 
             if (res.ok) {
-                toast.success(`Lead ${selectedLead ? 'updated' : 'created'} successfully`, {
+                toast.success(`Proposal sent successfully`, {
                     autoClose: 1000
                 })
-                fetchLeadsData()
                 handleClose()
             } else {
                 toast.error(data?.message || 'Something went wrong')
@@ -252,6 +243,7 @@ const ProposalDialog = ({
                         render={({ field, fieldState }) => (
                             <CustomTextField
                                 {...field}
+                                required
                                 label="Monthly Consumption (kWh)"
                                 fullWidth
                                 inputProps={{
@@ -290,6 +282,7 @@ const ProposalDialog = ({
                         render={({ field, fieldState }) => (
                             <CustomTextField
                                 {...field}
+                                required
                                 label="Sanctioned Load (kW)"
                                 fullWidth
                                 inputProps={{
@@ -317,14 +310,30 @@ const ProposalDialog = ({
 
                     {/* Lead Status */}
                     <Controller
-                        name="lead_status_id"
+                        name="industrial_sector_id"
                         control={control}
                         render={({ field, fieldState }) => (
-                            <CustomTextField select {...field} label="Lead Status" fullWidth error={!!fieldState.error}
-                                helperText={fieldState.error?.message}>
-                                {(createData?.statusData?.length ?? 0) > 0 ? (
-                                    createData?.statusData?.map(item => (
-                                        <MenuItem key={item._id} value={item._id}>
+                            <CustomTextField
+                                {...field}
+                                required
+                                select
+                                label="Industrial Sector"
+                                fullWidth
+                                onChange={(e) => {
+
+                                    console.log("Id", e?.target?.value);
+
+                                    field.onChange(e.target.value)
+
+                                    setSelectedIndustrialSectorId(e?.target?.value)
+                                }
+                                }
+                                error={!!fieldState.error}
+                                helperText={fieldState.error?.message}
+                            >
+                                {(createData?.industrialSectorData?.length ?? 0) > 0 ? (
+                                    createData?.industrialSectorData?.map(item => (
+                                        <MenuItem key={item._id} value={item._id} >
                                             {item?.title || ""}
                                         </MenuItem>
                                     ))
@@ -337,119 +346,15 @@ const ProposalDialog = ({
                         )}
                     />
 
-                    {/* Source */}
+                    {/* Base Unit Cost */}
                     <Controller
-                        name="source_id"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <CustomTextField select {...field} label="Source" fullWidth error={!!fieldState.error}
-                                helperText={fieldState.error?.message}>
-                                {(createData?.sourceData?.length ?? 0) > 0 ? (
-                                    createData?.sourceData?.map(item => (
-                                        <MenuItem key={item._id} value={item._id}>
-                                            {item.title}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem disabled value="">
-                                        No Sources Available
-                                    </MenuItem>
-                                )}
-                            </CustomTextField>
-                        )}
-                    />
-
-                    <Controller
-                        name="solution_id"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <CustomTextField select {...field} label="Solution" fullWidth error={!!fieldState.error}
-                                helperText={fieldState.error?.message}>
-                                {(createData?.solutionData?.length ?? 0) > 0 ? (
-                                    createData?.solutionData?.map(item => (
-                                        <MenuItem key={item._id} value={item._id}>
-                                            {item.title}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem disabled value="">
-                                        No Solution Available
-                                    </MenuItem>
-                                )}
-                            </CustomTextField>
-                        )}
-                    />
-
-                    {/* Lead Status */}
-                    <Controller
-                        name="state_id"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <CustomTextField
-                                select
-                                {...field}
-                                label="State"
-                                fullWidth
-                                error={!!fieldState.error}
-                                helperText={fieldState.error?.message}
-                                onChange={(e) => {
-                                    field.onChange(e); // keep RHF working
-                                    setSelectedCity([]);
-                                    setSelectedStateId(e.target.value); // your state update
-
-                                }}
-                            >
-                                {(createData?.states?.length ?? 0) > 0 ? (
-                                    createData.states.map(item => (
-                                        <MenuItem key={item._id} value={String(item.state_id)}>
-                                            {item?.state_name || ""}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem disabled value="">
-                                        No State Available
-                                    </MenuItem>
-                                )}
-                            </CustomTextField>
-                        )}
-                    />
-
-                    {/* Source */}
-                    <Controller
-                        name="city_id"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <CustomTextField
-                                select
-                                {...field}
-                                label="City"
-                                fullWidth
-                                error={!!fieldState.error}
-                                helperText={fieldState.error?.message}
-                            >
-                                {(selectedCity?.length ?? 0) > 0 ? (
-                                    selectedCity.map(item => (
-                                        <MenuItem key={item._id} value={String(item.city_id)}>
-                                            {item?.city_name}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem disabled value="">
-                                        No City Available
-                                    </MenuItem>
-                                )}
-                            </CustomTextField>
-                        )}
-                    />
-
-                    {/* Pincode */}
-                    <Controller
-                        name="pincode"
+                        name="base_unit_cost"
                         control={control}
                         render={({ field, fieldState }) => (
                             <CustomTextField
                                 {...field}
-                                label="Pincode"
+                                required
+                                label="Base Unit Cost (₹)"
                                 fullWidth
                                 error={!!fieldState.error}
                                 helperText={fieldState.error?.message}
@@ -463,23 +368,30 @@ const ProposalDialog = ({
                         )}
                     />
 
-                    {/* Address */}
-                    <Controller
-                        name="address"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <CustomTextField
-                                {...field}
-                                label="Address"
-                                fullWidth
-                                multiline
-                                error={!!fieldState.error}
-                                helperText={fieldState.error?.message}
-                                rows={3}
-                            />
-                        )}
-                    />
+                    {selectedIndustrialSectorId === "69c6580065ad315756decec7" && (
 
+
+                        <Controller
+                            name="base_unit_solar_rate"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <CustomTextField
+                                    {...field}
+                                    required={selectedIndustrialSectorId === "69c6580065ad315756decec7"}
+                                    label="Base Unit Solar Rate (₹)"
+                                    fullWidth
+                                    error={!!fieldState.error}
+                                    helperText={fieldState.error?.message}
+                                    inputProps={{ maxLength: 6, inputMode: "numeric" }}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9]/g, "");
+
+                                        field.onChange(value);
+                                    }}
+                                />
+                            )}
+                        />
+                    )}
                 </DialogContent>
 
                 <DialogActions className="justify-center">
@@ -493,7 +405,7 @@ const ProposalDialog = ({
                 </DialogActions>
 
             </form>
-        </Dialog>
+        </Dialog >
     )
 }
 

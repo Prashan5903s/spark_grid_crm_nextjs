@@ -71,7 +71,7 @@ export default function PermissionGuard({ children, locale, element }) {
 
                 if (permissions?.notUser) {
 
-                    redirect(`/${locale}/dashboard/lms`);
+                    redirect(`/${locale}/dashboard/crm`);
                 }
 
             } else {

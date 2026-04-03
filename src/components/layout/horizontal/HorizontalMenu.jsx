@@ -74,7 +74,7 @@ const HorizontalMenu = ({ dictionary }) => {
         }}
       >
         <SubMenu label={dictionary['navigation'].dashboard} icon={<i className='tabler-smart-home' />}>
-          <MenuItem href={`/${locale}/dashboard/lms`} icon={<i className='tabler-chart-pie-2' />}>
+          <MenuItem href={`/${locale}/dashboard/crm`} icon={<i className='tabler-chart-pie-2' />}>
             {dictionary['navigation'].crm}
           </MenuItem>
           <MenuItem href={`/${locale}/dashboard/analytics`} icon={<i className='tabler-trending-up' />}>

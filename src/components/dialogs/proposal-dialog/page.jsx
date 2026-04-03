@@ -21,6 +21,8 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
 import DialogCloseButton from '../DialogCloseButton'
+
+import DownloadPrposal from "@/utils/DowloadProposalPDF"
 import CustomTextField from '@core/components/mui/TextField'
 
 const ProposalDialog = ({
@@ -44,6 +46,7 @@ const ProposalDialog = ({
         average_monthly_consumption: pipe(string(), minLength(1, "Average monthly consumption is required")),
         sanctioned_load: pipe(string(), minLength(1, "Sanctioned load is required")),
         industrial_sector_id: pipe(string(), minLength(1, "Industrial sector is required")),
+        email: pipe(string(), minLength(1, "Email is required"), regex(/^\S+@\S+\.\S+$/, "Invalid email format")),
         base_unit_cost: pipe(string(), minLength(1, "Base unit cost is required")),
         base_unit_cost: pipe(
             string(),
@@ -99,6 +102,7 @@ const ProposalDialog = ({
     } = useForm({
         resolver: valibotResolver(schema),
         defaultValues: {
+            email: "",
             base_unit_cost: "",
             average_monthly_consumption: "",
             sanctioned_load: "",
@@ -112,6 +116,7 @@ const ProposalDialog = ({
             reset({
                 average_monthly_consumption: selectedLead?.average_monthly_consumption || '',
                 sanctioned_load: selectedLead?.sanctioned_load || '',
+                email: selectedLead?.email || '',
                 industrial_sector_id: selectedLead?.industrial_sector_id || '',
                 base_unit_cost: selectedLead?.base_unit_cost || '',
                 base_unit_solar_rate: selectedLead?.base_unit_solar_rate || ""
@@ -120,6 +125,7 @@ const ProposalDialog = ({
 
             reset({
                 base_unit_cost: "",
+                email: "",
                 average_monthly_consumption: '',
                 sanctioned_load: '',
                 industrial_sector_id: '',
@@ -159,6 +165,15 @@ const ProposalDialog = ({
             const data = await res.json()
 
             if (res.ok) {
+
+                const result = data?.data;
+
+                const finalData = result?.finalData || {};
+                const subject = result?.subject || "";
+                const message = result?.message || "";
+
+                await DownloadPrposal({ finalData, subject, message })
+
                 toast.success(`Proposal sent successfully`, {
                     autoClose: 1000
                 })
@@ -220,6 +235,29 @@ const ProposalDialog = ({
             <form onSubmit={handleSubmit(submitData)} noValidate>
 
                 <DialogContent className="grid grid-cols-2 gap-4">
+
+                    <Controller
+                        name="email"
+                        control={control}
+                        rules={{
+                            required: "Email is required",
+                            pattern: {
+                                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                message: "Invalid email format"
+                            }
+                        }}
+                        render={({ field, fieldState }) => (
+                            <CustomTextField
+                                {...field}
+                                required
+                                label="Email"
+                                fullWidth
+                                type="email"
+                                error={!!fieldState.error}
+                                helperText={fieldState.error?.message}
+                            />
+                        )}
+                    />
 
                     {/* Avg Consumption */}
                     <Controller
@@ -320,8 +358,6 @@ const ProposalDialog = ({
                                 label="Industrial Sector"
                                 fullWidth
                                 onChange={(e) => {
-
-                                    console.log("Id", e?.target?.value);
 
                                     field.onChange(e.target.value)
 

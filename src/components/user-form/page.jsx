@@ -3,39 +3,38 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
-// MUI Imports
+import { useSession } from 'next-auth/react'
 
 import { useRouter, useParams } from 'next/navigation'
 
-import Card from '@mui/material/Card'
-import Button from '@mui/material/Button'
-import Grid from '@mui/material/Grid2'
-import Divider from '@mui/material/Divider'
-import { useSession } from 'next-auth/react'
-import MenuItem from '@mui/material/MenuItem'
-import Checkbox from '@mui/material/Checkbox'
-import ListItemText from '@mui/material/ListItemText'
-import CardHeader from '@mui/material/CardHeader'
-import CircularProgress from '@mui/material/CircularProgress'
+import {
+    CardContent,
+    InputAdornment,
+    CardActions,
+    CircularProgress,
+    IconButton,
+    Button,
+    MenuItem,
+    Checkbox,
+    Card,
+    FormLabel,
+    ListItemText,
+    CardHeader,
+    Typography,
+    Radio,
+    FormControl,
+    FormControlLabel,
+    RadioGroup,
+    Divider
+} from '@mui/material'
 
-import Typography from '@mui/material/Typography'
+import Grid from '@mui/material/Grid2'
 
 import { useForm, Controller, useFormContext } from 'react-hook-form'
 
-import CardContent from '@mui/material/CardContent'
-
-import InputAdornment from '@mui/material/InputAdornment'
-
-import IconButton from '@mui/material/IconButton'
-
 import { valibotResolver } from '@hookform/resolvers/valibot';
 
-
 import { toast } from 'react-toastify'
-
-// Components Imports
-
-import CardActions from '@mui/material/CardActions'
 
 import {
     object,
@@ -62,8 +61,10 @@ const UserFormLayout = () => {
 
     const URL = process.env.NEXT_PUBLIC_API_URL
     const public_url = process.env.NEXT_PUBLIC_ASSETS_URL;
+
     const { data: session } = useSession() || {}
     const token = session?.user?.token
+
     const [createData, setCreateData] = useState({ 'country': [] }, { designations: [] });
     const [countryId, setCountryId] = useState();
     const [stateData, setStateData] = useState();
@@ -76,8 +77,9 @@ const UserFormLayout = () => {
     const [selectedBranch, setSelectedBranch] = useState();
     const [userRoles, setUserRoles] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { doGet, doPost } = useApi();
     const [loading, setLoading] = useState(false)
+
+    const { doGet, doPost } = useApi();
 
     const router = useRouter();
 
@@ -120,6 +122,7 @@ const UserFormLayout = () => {
             string(),
             minLength(1, 'City is required')
         ),
+        reporting_manager_id: string(),
         address: pipe(
             string(),
             minLength(1, 'Address is required'),
@@ -136,7 +139,6 @@ const UserFormLayout = () => {
             minLength(7, 'Phone number must be valid'),
             maxLength(15, 'Phone number can be a maximum of 15 digits')
         ),
-
         website: optional(
             string([
                 check(
@@ -162,10 +164,7 @@ const UserFormLayout = () => {
         zone_id: optional(string()),
         region_id: optional(string()),
         branch_id: optional(string()),
-        participation_type_id: pipe(
-            string(),
-            minLength(1, 'Participation type is required')
-        ),
+        participation_type_id: pipe(string(), minLength(1, 'Participation type is required')),
         employee_type: optional(string()),
         dob: optional(
             pipe(
@@ -187,6 +186,8 @@ const UserFormLayout = () => {
         ),
     });
 
+    const [userList, setUseList] = useState();
+
     // States
     const [formData, setFormData] = useState({
         company_name: '',
@@ -206,14 +207,12 @@ const UserFormLayout = () => {
         photo: '',
         website: '',
         status: false,
+        reporting_manager_id: "",
         roles: [],
         user_code: ''
     })
 
     const handleClickShowPassword = () => setFormData(show => ({ ...show, isPasswordShown: !show.isPasswordShown }))
-
-    const handleClickShowConfirmPassword = () =>
-        setFormData(show => ({ ...show, isConfirmPasswordShown: !show.isConfirmPasswordShown }))
 
     // const [formData, setFormData] = useState(initialData)
     const [imgSrc, setImgSrc] = useState('/images/avatars/11.png');
@@ -243,6 +242,7 @@ const UserFormLayout = () => {
             phone: '',
             photo: '',
             website: '',
+            reporting_manager_id: "",
             status: false,
             urn_no: '',
             idfa_code: '',
@@ -329,6 +329,10 @@ const UserFormLayout = () => {
             const departmentData = await doGet('company/department')
             const participationTypesData = await doGet(`admin/participation_types?status=true`);
             const roleData = await doGet(`company/role`);
+            const usersData = await doGet(`admin/company`)
+
+            console.log("USer", usersData?.company);
+
 
             setCreateData(prevData => ({
                 ...prevData,
@@ -337,6 +341,7 @@ const UserFormLayout = () => {
                 department: departmentData,
                 zones: zoneData, // same here
                 branch: branchData,
+                usersData: usersData?.company,
                 participation_types: participationTypesData, // same here
                 roles: roleData, // same here
             }));
@@ -358,6 +363,22 @@ const UserFormLayout = () => {
 
     }, [URL, token, id])
 
+    useEffect(() => {
+
+        if (createData && id) {
+
+            const filteredUsers = createData?.usersData?.filter(
+                (user) => user._id !== id
+            );
+
+            setUseList(filteredUsers)
+
+        } else {
+
+            setUseList(createData?.usersData)
+        }
+
+    }, [createData, id])
 
     useEffect(() => {
         if (id && editData) {
@@ -375,6 +396,7 @@ const UserFormLayout = () => {
                 status: editData.status ?? '',
                 website: editData.website ?? '',
                 urn_no: editData.urn_no ?? '',
+                reporting_manager_id: editData?.reporting_manager_id ?? "",
                 idfa_code: editData.idfa_code ?? '',
                 application_no: editData.application_no ?? '',
                 licence_no: editData.licence_no ?? '',
@@ -400,7 +422,7 @@ const UserFormLayout = () => {
 
             if (editData.roles?.length > 0) {
                 const rolesIds = editData.roles.map((role) => role.role_id);
-                
+
                 setUserRoles(rolesIds);
                 setValue('roles', rolesIds);
             }
@@ -408,19 +430,18 @@ const UserFormLayout = () => {
             if (editData.zone_id) {
                 setSelectZone(editData.zone_id);
             }
-            
+
             if (editData.region_id) {
                 setSelectedRegion(editData.region_id);
             }
 
             if (editData.branch_id && createData?.branch) {
                 const branchData = createData?.branch.filter((b) => b.regionId == editData.region_id) || [];
-                
+
                 setSelectedBranch(branchData);
             }
         }
     }, [id, editData, reset, setValue, createData]);
-
 
     useEffect(() => {
         if (countryId && createData?.country.length > 0) {
@@ -567,11 +588,9 @@ const UserFormLayout = () => {
 
     useEffect(() => {
         if (selectZone && createData) {
+
             const selectRegions = createData?.zones?.find((item) => item._id === selectZone);
 
-            // Reset when zone changes
-            // setSelectedBranch([]);
-            // setSelectedRegion('');
             setSelectRegion(selectRegions?.region || []);
         }
     }, [selectZone, createData, setValue]);
@@ -579,8 +598,7 @@ const UserFormLayout = () => {
     useEffect(() => {
         if (selectedRegion && createData) {
 
-            const branchData =
-                createData?.branch?.filter((item) => item.regionId === selectedRegion) || [];
+            const branchData = createData?.branch?.filter((item) => item.regionId === selectedRegion) || [];
 
             setSelectedBranch(branchData);
 
@@ -1166,7 +1184,7 @@ const UserFormLayout = () => {
                                             value={field.value ?? ""}
                                             onChange={(e) => {
                                                 const rawValue = e.target.value;
-                                                
+
                                                 const value =
                                                     rawValue === "undefined" || !rawValue ? "" : rawValue;
 
@@ -1208,7 +1226,7 @@ const UserFormLayout = () => {
                                             onChange={(e) => {
                                                 const rawValue = e.target.value;
                                                 const value = rawValue === "undefined" || !rawValue ? "" : rawValue;
-                                                
+
                                                 field.onChange(value);
                                             }}
                                             error={!!errors.branch_id}
@@ -1228,6 +1246,40 @@ const UserFormLayout = () => {
                                 />
                             </Grid>
                         )}
+
+                        <Grid size={{ xs: 12, sm: 4 }}>
+
+
+                            <Controller
+                                name="reporting_manager_id"
+                                control={control}
+                                defaultValue={false}
+                                render={({ field }) => (
+                                    <CustomTextField
+                                        {...field}
+                                        select
+                                        fullWidth
+                                        label="Reporting Manager"
+                                        value={field.value ?? ''} // ✅ ensure controlled
+                                        onChange={(e) => {
+                                            field.onChange(e.target.value); // ✅ update RHF state
+                                        }}
+                                        error={!!errors.department_id}
+                                        helperText={errors.department_id?.message}
+                                    >
+                                        {userList?.length > 0 ? (
+                                            userList.map((item) => (
+                                                <MenuItem key={item._id} value={item._id}>
+                                                    {item?.first_name} {" "} {item?.last_name}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem disabled>No User Found</MenuItem>
+                                        )}
+                                    </CustomTextField>
+                                )}
+                            />
+                        </Grid>
 
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <Controller
@@ -1378,7 +1430,7 @@ const UserFormLayout = () => {
                 </CardActions>
             </form>
 
-        </Card>
+        </Card >
     )
 }
 

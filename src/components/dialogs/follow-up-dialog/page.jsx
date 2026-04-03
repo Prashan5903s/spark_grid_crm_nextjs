@@ -105,6 +105,13 @@ const FollowUpDialog = ({
         }
     })
 
+    useEffect(() => {
+        if (open) {
+            setValue("status", "69c52842a9a39a1b7c89fbde")
+            setValue("follow_up_type", "69c52842a9a39a1b7c89fbda")
+        }
+    }, [open])
+
     const followUpDate = watch('follow_up_date')
     const nextFollowUpDate = watch('next_follow_up_date')
 
@@ -316,7 +323,7 @@ const FollowUpDialog = ({
                                 name="status"
                                 control={control}
                                 render={({ field }) => (
-                                    <CustomTextField {...field} fullWidth required select label="Status"
+                                    <CustomTextField {...field} fullWidth required select label="Follow up Status"
                                         error={!!errors.status}
                                         helperText={errors.status?.message}>
                                         {renderOptions(createData?.followUpStatus)}

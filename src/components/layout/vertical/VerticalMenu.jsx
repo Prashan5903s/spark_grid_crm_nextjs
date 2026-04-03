@@ -110,7 +110,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         {(permissArray?.notUser) && (
           <MenuItem
             key={"dashboard"}
-            href={`/${locale}/dashboard/lms`}
+            href={`/${locale}/dashboard/crm`}
             icon={<i className='tabler-smart-home' />}
           >
             Dashboard
@@ -236,6 +236,18 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               <MenuItem key="my_leads" href={`/${locale}/apps/leads`} icon={<i className='tabler-users'></i>}>
                 Leads
               </MenuItem>
+              <SubMenu label={"Follow Up"} icon={<i className="tabler-list"></i>}>
+
+                <MenuItem href={`/${locale}/apps/follow-up/today`}>
+                  Today
+                </MenuItem>
+                <MenuItem href={`/${locale}/apps/follow-up/tommorow`}>
+                  Tommorow
+                </MenuItem>
+                <MenuItem href={`/${locale}/apps/follow-up/view-all`}>
+                  View All
+                </MenuItem>
+              </SubMenu>
             </>
           )}
           {permissArray?.isCompany && (

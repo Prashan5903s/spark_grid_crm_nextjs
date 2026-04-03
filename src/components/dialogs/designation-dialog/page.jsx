@@ -151,6 +151,7 @@ const DesignationDialog = ({ open, setOpen, data, fetchDesignations }) => {
   }, [open, data, reset])
 
   const submitData = async (value) => {
+
     setLoading(true)
 
     const isEdit = Boolean(data)
@@ -177,9 +178,9 @@ const DesignationDialog = ({ open, setOpen, data, fetchDesignations }) => {
         throw new Error(result.message || 'Something went wrong!')
       }
 
-      toast.success(result.message || 'Operation successful', { autoClose: 700 })
       fetchDesignations()
-      setOpen(false)
+      handleClose()
+      toast.success(result.message || 'Operation successful', { autoClose: 1000 })
 
     } catch (error) {
       console.error('submitData error:', error)
@@ -189,11 +190,16 @@ const DesignationDialog = ({ open, setOpen, data, fetchDesignations }) => {
     }
   }
 
-  const onSubmit = (values) => submitData(values)
+  const onSubmit = async (values) => {
+
+    await submitData(values)
+    handleClose()
+  }
 
   return (
     <Dialog
       open={open}
+      fullWidth
       onClose={handleClose}
       closeAfterTransition={false}
       sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}

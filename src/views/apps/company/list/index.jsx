@@ -1,9 +1,5 @@
 'use client'
 
-// MUI Imports
-
-// Component Imports
-
 import { useEffect, useState } from 'react'
 
 import { useSession } from 'next-auth/react'
@@ -47,6 +43,7 @@ const UserList = () => {
 
   useEffect(() => {
     if (URL && token) {
+
       fetchData();
     }
   }, [URL, token])

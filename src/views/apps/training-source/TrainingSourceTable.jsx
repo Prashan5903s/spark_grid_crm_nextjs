@@ -4,13 +4,7 @@
 import { useState, useMemo, useEffect } from 'react'
 
 // MUI Imports
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import MenuItem from '@mui/material/MenuItem'
-import Chip from '@mui/material/Chip'
-import Typography from '@mui/material/Typography'
-import Checkbox from '@mui/material/Checkbox'
-import IconButton from '@mui/material/IconButton'
+import { Card, CardContent, MenuItem, Chip, Typography, Checkbox, IconButton, Button } from '@mui/material'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -31,7 +25,7 @@ import {
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import TablePaginationComponent from '@components/TablePaginationComponent'
-import GroupDialog from '@components/dialogs/group-dialog/page' // 👈 Update the path if needed
+import TrainingSourceDialog from '@components/dialogs/training-sources-dialog/page' // 👈 Update the path if needed
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -202,7 +196,7 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
 
         const handleDownload = () => {
           const link = document.createElement('a');
-          
+
           link.href = fileUrl;
           link.download = row?.original?.file_path || 'report.xlsx'; // default name
           document.body.appendChild(link);
@@ -243,6 +237,11 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const handleClose = async () => {
+
+    setOpenDialog(false)
+  }
+
   return (
     <Card>
       <CardContent className='flex justify-between flex-col gap-4 items-start sm:flex-row sm:items-center'>
@@ -266,6 +265,9 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
             onChange={value => setGlobalFilter(String(value))}
             placeholder='Search...'
           />
+          <Button variant='contained' size='lg' onClick={() => setOpenDialog(true)}>
+            Add Training Source
+          </Button>
         </div>
       </CardContent>
 
@@ -322,9 +324,10 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
 
       {/* Role Dialog */}
       {openDialog && (
-        <GroupDialog
+        <TrainingSourceDialog
           tableData={tableData}
           open={openDialog}
+          handleClose={handleClose}
           setOpen={setOpenDialog}
           selectedRole={selectedRole}
           fetchRoleData={fetchRoleData}

@@ -10,9 +10,9 @@ import Grid from '@mui/material/Grid2'
 
 import SkeletonTableComponent from '@/components/skeleton/table/page'
 
-import DownloadCenterTable from './DownloadCenterTable'
+import TrainingSourceTable from './TrainingSourceTable'
 
-const DownloadCenterComponent = () => {
+const TrainingSourceComponent = () => {
 
     const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
@@ -61,12 +61,15 @@ const DownloadCenterComponent = () => {
         <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
                 <Typography variant='h4' className='mbe-1'>
-                    Download Center List
+                    Training Sources List
                 </Typography>
+            </Grid>
+            <Grid>
+
             </Grid>
             <Grid size={{ xs: 12 }}>
                 {data ? (
-                    <DownloadCenterTable tableData={data} fetchRoleData={fetchRoleData} />
+                    <TrainingSourceTable tableData={data} fetchRoleData={fetchRoleData} />
                 )
                     : (
                         <SkeletonTableComponent />
@@ -77,4 +80,4 @@ const DownloadCenterComponent = () => {
     )
 }
 
-export default DownloadCenterComponent
+export default TrainingSourceComponent

@@ -1,8 +1,11 @@
 "use client"
 
-import { useSession } from "next-auth/react"
 import { useState, useMemo, useEffect } from "react"
+
 import { useParams } from "next/navigation"
+
+import { useSession } from "next-auth/react"
+
 import dayjs from "dayjs"
 
 import {
@@ -17,6 +20,7 @@ import {
 
 import {
     Card,
+    IconButton,
     CardContent,
     Checkbox,
     Typography,
@@ -32,21 +36,11 @@ import tableStyles from "@core/styles/table.module.css"
 
 import DateRangeComponent from "@/components/DateRangeComponent"
 
-import { getInitials } from '@/utils/getInitials';
-
+import { getInitials } from '@/utils/getInitials'
 import CustomAvatar from '@/@core/components/mui/Avatar'
+import FollowUpDialog from "@/components/dialogs/follow-up-dialog/page"
 
 const columnHelper = createColumnHelper()
-
-const getAvatar = params => {
-    const { avatar, fullName } = params
-
-    if (avatar) {
-        return <CustomAvatar src={`${public_url}/${avatar}`} size={34} />
-    } else {
-        return <CustomAvatar size={34}>{getInitials(fullName)}</CustomAvatar>
-    }
-}
 
 const FollowUp = () => {
     const { type } = useParams()
@@ -54,20 +48,33 @@ const FollowUp = () => {
 
     const token = session?.user?.token
     const URL = process.env.NEXT_PUBLIC_API_URL
+    const public_url = process.env.NEXT_PUBLIC_PUBLIC_URL
 
     const [tableData, setTableData] = useState([])
     const [globalFilter, setGlobalFilter] = useState("")
     const [rowSelection, setRowSelection] = useState({})
-
     const [selectedStatus, setSelectedStatus] = useState("")
 
-    // FIXED: Initialize properly
     const [createData, setCreateData] = useState({
         followUpStatus: []
     })
 
     const [startDate, setStartDate] = useState(null)
     const [endDate, setEndDate] = useState(null)
+
+    // Dummy handlers (FIX)
+    const [selectedLead, setSelectedLead] = useState(null)
+    const [selectedLeadId, setSelectedLeadId] = useState(null)
+    const [openDialog, setOpenDialog] = useState(false)
+
+    // Avatar Helper
+    const getAvatar = ({ avatar, fullName }) => {
+        if (avatar) {
+            return <CustomAvatar src={`${public_url}/${avatar}`} size={34} />
+        }
+        
+        return <CustomAvatar size={34}>{getInitials(fullName || "")}</CustomAvatar>
+    }
 
     // Fetch Table Data
     const fetchFollowUpData = async () => {
@@ -127,19 +134,10 @@ const FollowUp = () => {
         if (URL && token) fetchCreateData()
     }, [URL, token])
 
+    // Better Date Format
     const formatTime = (value) => {
-        if (!value) return '';
-
-        const date = new Date(value);
-
-        if (isNaN(date)) return '';
-
-        return date.toLocaleString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-        })
-    };
+        return value ? dayjs(value).format("DD MMM YYYY") : ""
+    }
 
     // Columns
     const columns = useMemo(() => [
@@ -159,71 +157,107 @@ const FollowUp = () => {
                 />
             )
         },
+
         columnHelper.accessor('first_name', {
             header: 'User',
-            cell: ({ row }) => (
-                <div className='flex items-center gap-4'>
-                    {getAvatar({ avatar: "", fullName: row.original.lead_data.name })}
-                    <div className='flex flex-col'>
-                        <Typography color='text.primary' className='font-medium'>
-                            {row.original.lead_data.name}
-                        </Typography>
-                        <Typography variant='body2'>{row.original.lead_data.email}</Typography>
+            cell: ({ row }) => {
+                const lead = row.original?.lead_data || {}
+
+                return (
+                    <div className='flex items-center gap-4'>
+                        {getAvatar({ avatar: "", fullName: lead?.name })}
+                        <div className='flex flex-col'>
+                            <Typography className='font-medium'>
+                                {lead?.name || "-"}
+                            </Typography>
+                            <Typography variant='body2'>
+                                {lead?.email || "-"}
+                            </Typography>
+                        </div>
                     </div>
-                </div>
-            )
+                )
+            }
         }),
+
         columnHelper.accessor("company_name", {
             header: "Company Name",
             cell: ({ row }) => (
-                <Typography>{row.original?.lead_data?.company_name}</Typography>
+                <Typography>
+                    {row.original?.lead_data?.company_name || "-"}
+                </Typography>
             )
         }),
+
         columnHelper.accessor("email", {
             header: "Email",
             cell: ({ row }) => (
-                <Typography>{row.original?.lead_data?.email}</Typography>
+                <Typography>
+                    {row.original?.lead_data?.email || "-"}
+                </Typography>
             )
         }),
+
         columnHelper.accessor("phone", {
             header: "Phone",
             cell: ({ row }) => (
-                <Typography>{row.original?.lead_data?.phone}</Typography>
+                <Typography>
+                    {row.original?.lead_data?.phone || "-"}
+                </Typography>
             )
         }),
+
         columnHelper.accessor("lead_status", {
             header: "Status",
             cell: ({ row }) => (
                 <Typography>
-                    {row.original?.status_data?.title}
+                    {row.original?.status_data?.title || "-"}
                 </Typography>
             )
         }),
+
         columnHelper.accessor("type_data", {
             header: "Follow-up Type",
             cell: ({ row }) => (
                 <Typography>
-                    {row.original?.follow_up_type_data?.title}
+                    {row.original?.follow_up_type_data?.title || "-"}
                 </Typography>
             )
         }),
+
         columnHelper.accessor("priority", {
             header: "Priority",
             cell: ({ row }) => (
                 <Typography>
-                    {row.original?.priority_data?.title}
+                    {row.original?.priority_data?.title || "-"}
                 </Typography>
             )
         }),
+
         columnHelper.accessor("follow_up_date", {
-            header: "Follow-up Data",
+            header: "Follow-up Date",
             cell: ({ row }) => (
                 <Typography>
                     {formatTime(row.original?.follow_up_date)}
                 </Typography>
             )
+        }),
+
+        columnHelper.accessor('action', {
+            header: 'Actions',
+            cell: ({ row }) => (
+                <IconButton
+                    onClick={() => {
+                        setSelectedLead(row.original)
+                        setSelectedLeadId(row?.original?._id)
+                        setOpenDialog(true)
+                    }}
+                >
+                    <i className='tabler-edit text-textSecondary' />
+                </IconButton>
+            ),
         })
-    ], [])
+
+    ], [tableData]) // FIXED dependency
 
     const table = useReactTable({
         data: tableData,
@@ -239,12 +273,11 @@ const FollowUp = () => {
     })
 
     return (
-
         <Card>
             <CardContent>
                 <Grid container spacing={3} alignItems="center" justifyContent="space-between">
 
-                    {/* Left: Page Size */}
+                    {/* Page Size */}
                     <Grid size={{ xs: 12, sm: 6 }}>
                         <div className="flex items-center gap-2">
                             <Typography>Show</Typography>
@@ -262,11 +295,10 @@ const FollowUp = () => {
                         </div>
                     </Grid>
 
-                    {/* Right: Filters */}
-                    <Grid container spacing={2} size={type === 'view-all' ? { xs: 12, sm: 6 } : { xs: 12, sm: 6 }}>
+                    {/* Filters */}
+                    <Grid container spacing={2} size={{ xs: 12, sm: 6 }}>
 
-                        {/* Status Filter */}
-                        <Grid size={type === 'view-all' ? { xs: 12, sm: 6 } : { xs: 12 }}>
+                        <Grid size={{ xs: 12, sm: type === 'view-all' ? 6 : 12 }}>
                             <TextField
                                 label="Status"
                                 select
@@ -275,8 +307,8 @@ const FollowUp = () => {
                                 size="small"
                                 onChange={(e) => setSelectedStatus(e.target.value)}
                             >
-                                <MenuItem value="" disabled>Select Status</MenuItem>
-                                {(createData.followUpStatus || []).map((item) => (
+                                <MenuItem value="">All</MenuItem>
+                                {createData.followUpStatus.map((item) => (
                                     <MenuItem key={item._id} value={item._id}>
                                         {item.title}
                                     </MenuItem>
@@ -284,10 +316,7 @@ const FollowUp = () => {
                             </TextField>
                         </Grid>
 
-                        {/* Date Range */}
-
                         {type === 'view-all' && (
-
                             <Grid size={{ xs: 12, sm: 6 }}>
                                 <DateRangeComponent
                                     startDate={startDate}
@@ -303,14 +332,14 @@ const FollowUp = () => {
                 </Grid>
             </CardContent>
 
-            {/* TABLE */}
+            {/* Table */}
             <div className="overflow-x-auto">
                 <table className={tableStyles.table}>
                     <thead>
                         {table.getHeaderGroups().map((hg) => (
                             <tr key={hg.id}>
                                 {hg.headers.map((header) => (
-                                    <th key={header.id} className="text-left px-4 py-3">
+                                    <th key={header.id} className="px-4 py-3 text-left">
                                         {flexRender(header.column.columnDef.header, header.getContext())}
                                     </th>
                                 ))}
@@ -327,7 +356,7 @@ const FollowUp = () => {
                             </tr>
                         ) : (
                             table.getRowModel().rows.map((row) => (
-                                <tr key={row.id} className="hover:bg-gray-50 transition">
+                                <tr key={row.id} className="hover:bg-gray-50">
                                     {row.getVisibleCells().map((cell) => (
                                         <td key={cell.id} className="px-4 py-3">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -344,8 +373,17 @@ const FollowUp = () => {
             <div className="px-4 py-2">
                 <TablePaginationComponent table={table} />
             </div>
-        </Card >
+            {openDialog && (
 
+                <FollowUpDialog
+                    open={openDialog}
+                    isChange={true}
+                    selectedLeadId={selectedLeadId}
+                    selectedLead={selectedLead}
+                    setOpen={setOpenDialog}
+                />
+            )}
+        </Card>
     )
 }
 

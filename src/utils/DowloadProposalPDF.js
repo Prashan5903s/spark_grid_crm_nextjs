@@ -15,6 +15,7 @@ const toBase64 = async (url) => {
 
         return await new Promise((resolve, reject) => {
             const reader = new FileReader();
+            
             reader.onloadend = () => resolve(reader.result);
             reader.onerror = reject;
             reader.readAsDataURL(blob);
@@ -22,6 +23,7 @@ const toBase64 = async (url) => {
 
     } catch (err) {
         console.error(" Base64 conversion failed:", url, err);
+        
         return ""; //  IMPORTANT: don't return URL
     }
 };
@@ -84,6 +86,7 @@ const DownloadProposal = async ({ finalData, message }) => {
         const html = compiledMessage(replacements);
 
         const element = document.createElement("div");
+        
         element.innerHTML = html;
 
         document.body.appendChild(element);

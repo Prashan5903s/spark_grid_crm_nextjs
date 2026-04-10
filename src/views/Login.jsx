@@ -210,7 +210,7 @@ const Login = ({ mode }) => {
                   fullWidth
                   type='email'
                   label='Email'
-                  placeholder='Enter your email 1'
+                  placeholder='Enter your email'
                   onChange={e => {
                     field.onChange(e.target.value)
                     errorState !== null && setErrorState(null)
@@ -291,7 +291,7 @@ const Login = ({ mode }) => {
                 'Login'
               )}
             </Button>
-              {/* <div className='flex justify-center items-center flex-wrap gap-2'>
+            {/* <div className='flex justify-center items-center flex-wrap gap-2'>
                 <Typography>New on our platform?</Typography>
                 <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
                   Create an account

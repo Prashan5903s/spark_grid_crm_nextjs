@@ -208,14 +208,14 @@ function LeadsFilters({
             size="small"
             label="Converted"
             value={filters.converted}
-            onChange={(e) => handleChange('converted', e.target.value === 'true')}
+            onChange={(e) => handleChange('converted', e.target.value)}
           >
             {[{
               title: "Yes",
-              value: true
+              value: "true"
             }, {
               title: "No",
-              value: false
+              value: "false"
             }].map(opt => (
               <MenuItem key={opt.value} value={opt.value}>{opt.title}</MenuItem>
             ))}
@@ -245,17 +245,27 @@ function LeadsFilters({
   )
 }
 
-const LeadTable = ({ tableData, fetchLeadsData, permissions, openDialog, selectedLead, setSelectedLead, setOpenDialog }) => {
+const LeadTable = ({
+  tableData,
+  setIsTable,
+  setOpenTableDialog,
+  openFollowUpModal,
+  setFollowUpModal,
+  selectedLeadId,
+  setSelectedLeadId,
+  fetchLeadsData,
+  permissions,
+  openDialog,
+  selectedLead,
+  setSelectedLead,
+  isProposalModalOpen,
+  setIsProposalModalOpen,
+  setOpenDialog,
+}) => {
 
   const [rowSelection, setRowSelection] = useState({})
   const [filteredData, setFilteredData] = useState([])
   const [globalFilter, setGlobalFilter] = useState('')
-
-  const [openTableDialog, setOpenTableDialog] = useState(false)
-  const [isProposalModalOpen, setIsProposalModalOpen] = useState(false)
-
-  const [openFollowUpModal, setFollowUpModal] = useState(false)
-  const [selectedLeadId, setSelectedLeadId] = useState();
 
   useEffect(() => {
     if (tableData) {
@@ -349,7 +359,7 @@ const LeadTable = ({ tableData, fetchLeadsData, permissions, openDialog, selecte
               alignItems: 'center'
             }}
           >
-            {row?.original?.lead_status_id === "69cdfa695fe101bc34930e9b" && (
+            {row?.original?.lead_status_id === "69d5dfb78c890e742280d9c9" && (
               <i
                 className="tabler-send cursor-pointer icon-btn"
                 onClick={() => {
@@ -405,6 +415,8 @@ const LeadTable = ({ tableData, fetchLeadsData, permissions, openDialog, selecte
           {(
             <IconButton
               onClick={() => {
+
+                setIsTable(false)
                 setSelectedLead(row.original)
                 setOpenDialog(true)
               }}
@@ -507,38 +519,6 @@ const LeadTable = ({ tableData, fetchLeadsData, permissions, openDialog, selecte
       </div>
 
       <TablePaginationComponent table={table} />
-      {
-        openFollowUpModal && (
-          <FollowUpDialog
-            tableData={finalData || tableData}
-            open={openFollowUpModal}
-            selectedLeadId={selectedLeadId}
-            selectedLead={selectedLead}
-            fetchLeadsData={fetchLeadsData}
-            setOpen={setFollowUpModal}
-          />
-        )
-      }
-      {
-        openTableDialog && (
-          <FollowUpTableDialog
-            tableData={selectedLead}
-            open={openTableDialog}
-            setOpen={setOpenTableDialog}
-            selectedLeadId={selectedLeadId}
-          />
-        )
-      }
-      {
-        isProposalModalOpen && (
-          <ProposalDialog
-            open={isProposalModalOpen}
-            setOpen={setIsProposalModalOpen}
-            selectLeadId={selectedLeadId}
-            selectedLead={selectedLead}
-          />
-        )
-      }
     </div>
   )
 }
@@ -547,10 +527,31 @@ function KanbanCard({
   lead,
   status,
   setOpenDialog,
-  setSelectedLead
+  setSelectedLead,
+  isProposalModalOpen,
+  setFollowUpModal,
+  openFollowUpModal,
+  openTableDialog,
+  setIsProposalModalOpen,
+  setOpenTableDialog,
+  openDialog,
+  setSelectedLeadId,
+  selectedLeadId
 }) {
 
   const [anchorEl, setAnchorEl] = useState(null)
+
+  const priortyFun = async ({ id }) => {
+
+    const value = {
+      "69c52842a9a39a1b7c89fbe1": "Three Star",
+      "69c52842a9a39a1b7c89fbe2": "One Star",
+      "69c52842a9a39a1b7c89fbe3": "Two Star"
+    }
+
+    return value?.[id];
+
+  }
 
   return (
     <div
@@ -565,6 +566,9 @@ function KanbanCard({
       <Typography variant='body2'>{lead.email}</Typography>
       <Typography variant='body2'>{lead.company}</Typography>
       <Typography className='mt-1'>{lead.phone}</Typography>
+      <Typography variant='caption'>{lead?.followUp?.length} {" Follow Up"}</Typography>
+
+
 
       <div className='flex justify-between items-center mt-2'>
         <Typography variant='caption'>{formatTime(lead.created_at)}</Typography>
@@ -574,129 +578,30 @@ function KanbanCard({
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         <MenuItem onClick={() => {
 
+          setSelectedLead(lead)
+          setSelectedLeadId(lead?._id)
+          setFollowUpModal(true)
+        }}>
+          Add Follow Up
+        </MenuItem>
+        <MenuItem onClick={() => {
+
+          setSelectedLead(lead)
+          setSelectedLeadId(lead?._id)
+          setOpenTableDialog(true)
+        }}>
+          View Follow Up
+        </MenuItem>
+        <MenuItem>Convert to Client</MenuItem>
+        <MenuItem onClick={() => {
+
           setAnchorEl(null)
           setOpenDialog(true)
           setSelectedLead(lead)
         }}>
           Edit
         </MenuItem>
-        <MenuItem>Convert to Client</MenuItem>
       </Menu>
-    </div>
-  )
-}
-
-function GridView({
-  tableData,
-  setOpenDialog,
-  setSelectedLead
-}) {
-
-  const [anchorEl, setAnchorEl] = useState(null)
-
-  // Pagination state
-  const [page, setPage] = useState(1)
-  const rowsPerPage = 8
-
-  const totalPages = Math.ceil(tableData.length / rowsPerPage)
-
-  // Slice data for current page
-  const paginatedData = useMemo(() => {
-    const start = (page - 1) * rowsPerPage
-    return tableData.slice(start, start + rowsPerPage)
-  }, [tableData, page])
-
-  return (
-
-    <div className='p-4'>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-        {paginatedData.map((lead, index) => (
-          <div key={index} className='bg-white rounded-xl border p-4 hover:shadow-md'>
-            <div className='flex justify-between'>
-              <CustomAvatar size={48}>
-                {lead?.name?.[0] || ""}
-              </CustomAvatar>
-
-              <i
-                className='tabler-dots-vertical cursor-pointer'
-                onClick={(e) => setAnchorEl(e.currentTarget)}
-              />
-
-              {/* MENU */}
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={() => setAnchorEl(null)}
-              >
-                <MenuItem onClick={() => {
-
-                  setAnchorEl(null)
-                  setSelectedLead(lead)
-                  setOpenDialog(true)
-                }}>Edit</MenuItem>
-                <MenuItem>Convert to Client</MenuItem>
-              </Menu>
-            </div>
-
-            <Typography className='mt-2'>{lead.name}</Typography>
-            <Typography variant='body2'>{lead.email}</Typography>
-
-            <div className='mt-3 p-3 bg-gray-50 rounded-lg'>
-              <Typography variant='body2'>
-                Company: {lead.company_name}
-              </Typography>
-              <Typography variant='body2'>
-                Phone: {lead.phone}
-              </Typography>
-            </div>
-
-            <Typography variant='caption' className='block mt-2'>
-              {formatTime(lead.created_at)}
-            </Typography>
-
-            <div className='flex gap-2 mt-3'>
-              <Button onClick={() => {
-
-                setSelectedLead(lead)
-                setOpenDialog(true)
-              }} fullWidth size='small' startIcon={<i className='tabler-edit' />}>
-                Edit
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ✅ PAGINATION */}
-      <div className='flex justify-end mt-4 gap-2 items-center'>
-        <Button
-          size='small'
-          disabled={page === 1}
-          onClick={() => setPage((prev) => prev - 1)}
-        >
-          Previous
-        </Button>
-
-        {/* Dynamic page numbers */}
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-          <Button
-            key={p}
-            size='small'
-            variant={p === page ? 'contained' : 'outlined'}
-            onClick={() => setPage(p)}
-          >
-            {p}
-          </Button>
-        ))}
-
-        <Button
-          size='small'
-          disabled={page === totalPages}
-          onClick={() => setPage((prev) => prev + 1)}
-        >
-          Next
-        </Button>
-      </div>
     </div>
   )
 }
@@ -727,11 +632,16 @@ const applyFilters = (lead, filters, view) => {
   const matchesSolution =
     !solution || lead.solution_id === solution;
 
-  // ✅ Correct field: is_converted
+  //  Correct field: is_converted
   const matchesConverted =
     converted === '' ||
     converted === null ||
-    lead.is_converted === converted;
+    lead.is_converted === (
+      converted === 'true' || converted === '1'
+    );
+
+  console.log("Result", converted, lead);
+
 
   return (
     matchesSearch &&
@@ -766,21 +676,18 @@ export default function LeadsPage({
   const [selectedLead, setSelectedLead] = useState(null)
   const [finalData, setFinalData] = useState()
 
-  useEffect(() => {
-
-    if (finalData) {
-
-      console.log("Final", finalData);
-
-    }
-  }, [finalData])
-
   const [open, setOpen] = useState(false)
 
   const [anchorEl, setAnchorEl] = useState(null)
 
   const getPermissions = usePermissionList();
   const [permissions, setPermissions] = useState({});
+
+  const [isProposalModalOpen, setIsProposalModalOpen] = useState(false)
+
+  const [openTableDialog, setOpenTableDialog] = useState(false)
+  const [openFollowUpModal, setFollowUpModal] = useState(false)
+  const [selectedLeadId, setSelectedLeadId] = useState();
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -799,9 +706,6 @@ export default function LeadsPage({
   }, [getPermissions]);
 
   const handleSearch = () => {
-
-    console.log("Filter", filters);
-
 
     if (view === "kanban") {
 
@@ -848,6 +752,8 @@ export default function LeadsPage({
             variant="contained"
             startIcon={<i className="tabler-plus" />}
             onClick={() => {
+              setIsTable(true)
+              setSelectLeadStatusId()
               setOpenDialog(true)
               setSelectedLead(null)
             }}
@@ -916,19 +822,6 @@ export default function LeadsPage({
             >
               <i className="tabler-layout-kanban" />
             </Button>
-            <Button
-              size="small"
-              variant={view === 'grid' ? 'contained' : 'outlined'}
-              onClick={() => {
-
-                setLeadsData()
-                setIsTable(true)
-                setView('grid')
-              }
-              }
-            >
-              <i className="tabler-grid-dots" />
-            </Button>
           </div>
         </Grid>
       </Grid>
@@ -937,7 +830,16 @@ export default function LeadsPage({
       {view === 'table' && (
         <div className="p-4">
           <LeadTable
+            setIsTable={setIsTable}
+            isProposalModalOpen={isProposalModalOpen}
+            setFollowUpModal={setFollowUpModal}
+            openFollowUpModal={openFollowUpModal}
+            openTableDialog={openTableDialog}
+            setIsProposalModalOpen={setIsProposalModalOpen}
+            setOpenTableDialog={setOpenTableDialog}
             openDialog={openDialog}
+            setSelectedLeadId={setSelectedLeadId}
+            selectedLeadId={selectedLeadId}
             setOpenDialog={setOpenDialog}
             setSelectedLead={setSelectedLead}
             selectedLead={selectedLead}
@@ -981,6 +883,7 @@ export default function LeadsPage({
                   onClick={() => {
                     setOpenDialog(true)
                     setSelectedLead()
+                    setIsTable(false)
                     setSelectLeadStatusId(col?.status?._id)
                   }}
                 >
@@ -988,30 +891,33 @@ export default function LeadsPage({
                 </Button>
 
                 <div className="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1">
-                  {filteredLeads.map((lead, index) => (
-                    <KanbanCard
-                      key={index}
-                      setOpenDialog={setOpenDialog}
-                      setSelectedLead={setSelectedLead}
-                      lead={lead}
-                      status={col?.status}
-                    />
-                  ))}
+                  {filteredLeads?.length > 0 ?
+                    filteredLeads.map((lead, index) => (
+                      <KanbanCard
+                        isProposalModalOpen={isProposalModalOpen}
+                        setFollowUpModal={setFollowUpModal}
+                        openFollowUpModal={openFollowUpModal}
+                        openTableDialog={openTableDialog}
+                        setIsProposalModalOpen={setIsProposalModalOpen}
+                        setOpenTableDialog={setOpenTableDialog}
+                        openDialog={openDialog}
+                        setSelectedLeadId={setSelectedLeadId}
+                        selectedLeadId={selectedLeadId}
+                        key={index}
+                        setOpenDialog={setOpenDialog}
+                        setSelectedLead={setSelectedLead}
+                        lead={lead}
+                        status={col?.status}
+                      />
+                    ))
+                    : (
+                      <Typography display={"flex"} justifyContent={"center"} alignItems={"center"}>No Data Found</Typography>
+                    )
+                  }
                 </div>
               </div>
             )
           })}
-        </div>
-      )}
-
-      {/* GRID */}
-      {view === 'grid' && (
-        <div className="p-4">
-          <GridView
-            tableData={finalData || tableData}
-            setOpenDialog={setOpenDialog}
-            setSelectedLead={setSelectedLead}
-          />
         </div>
       )}
 
@@ -1028,7 +934,38 @@ export default function LeadsPage({
           permissionArr={permissions}
         />
       )}
-
+      {
+        openFollowUpModal && (
+          <FollowUpDialog
+            tableData={finalData || tableData}
+            open={openFollowUpModal}
+            selectedLeadId={selectedLeadId}
+            selectedLead={selectedLead}
+            fetchLeadsData={fetchLeadsData}
+            setOpen={setFollowUpModal}
+          />
+        )
+      }
+      {
+        openTableDialog && (
+          <FollowUpTableDialog
+            tableData={selectedLead}
+            open={openTableDialog}
+            setOpen={setOpenTableDialog}
+            selectedLeadId={selectedLeadId}
+          />
+        )
+      }
+      {
+        isProposalModalOpen && (
+          <ProposalDialog
+            open={isProposalModalOpen}
+            setOpen={setIsProposalModalOpen}
+            selectLeadId={selectedLeadId}
+            selectedLead={selectedLead}
+          />
+        )
+      }
     </Card>
   )
 }

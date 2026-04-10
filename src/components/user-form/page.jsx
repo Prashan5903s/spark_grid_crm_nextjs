@@ -3,9 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
-import { useSession } from 'next-auth/react'
-
 import { useRouter, useParams } from 'next/navigation'
+
+import { useSession } from 'next-auth/react'
 
 import {
     CardContent,
@@ -17,11 +17,11 @@ import {
     MenuItem,
     Checkbox,
     Card,
-    FormLabel,
+    Autocomplete,
     ListItemText,
     CardHeader,
     Typography,
-    Radio,
+    TextField,
     FormControl,
     FormControlLabel,
     RadioGroup,
@@ -79,6 +79,8 @@ const UserFormLayout = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [loading, setLoading] = useState(false)
 
+    const [selectedUserLevel, setSelectedUserLevel] = useState()
+
     const { doGet, doPost } = useApi();
 
     const router = useRouter();
@@ -95,6 +97,10 @@ const UserFormLayout = () => {
             string(),
             minLength(1, 'Last Name is required'),
             maxLength(255, 'Last Name can be a maximum of 255 characters')
+        ),
+        user_level_id: pipe(
+            string(),
+            minLength(1, "User Level is required")
         ),
         email: pipe(
             string(),
@@ -139,32 +145,19 @@ const UserFormLayout = () => {
             minLength(7, 'Phone number must be valid'),
             maxLength(15, 'Phone number can be a maximum of 15 digits')
         ),
-        website: optional(
-            string([
-                check(
-                    (value) =>
-                        value === '' ||
-                        (
-                            value.length >= 8 &&
-                            value.length <= 50 &&
-                            /^(https?:\/\/)?([\w\-]+\.)+[\w\-]{2,}(\/[\w\-./?%&=]*)?$/.test(value)
-                        ),
-                    'Please enter a valid website URL (e.g., https://example.com) between 8 and 50 characters'
-                ),
-            ])
-        ),
+
         photo: optional(string()), // Optional field or could validate file type
         status: boolean(), // or optional(boolean()) if not required
         designation_id: optional(string()), // or optional(boolean()) if not required
         department_id: optional(string()),
-        urn_no: optional(string()),
-        idfa_code: optional(string()),
-        application_no: optional(string()),
-        licence_no: optional(string()),
-        zone_id: optional(string()),
-        region_id: optional(string()),
-        branch_id: optional(string()),
-        participation_type_id: pipe(string(), minLength(1, 'Participation type is required')),
+        country_level_id: selectedUserLevel === "69d75130d9daa00434648316" ? pipe(string(), minLength(1, "Country is required")) : optional(string()),
+        zone_id: selectedUserLevel == "69d3a36f9e57cff228594aea" ? pipe(
+            string(),
+            minLength(1, "Zone is required")
+        ) : optional(string()),
+        region_id: selectedUserLevel == "69d3a36f9e57cff228594aeb" ? pipe(string(), minLength(1, "Region is required")) : optional(string()),
+        branch_id: (selectedUserLevel == "69d3a36f9e57cff228594aed" || selectedUserLevel == "69d3a36f9e57cff228594aec") ? pipe(string(), minLength(1, "Branch is required")) : optional(string()),
+        participation_type_id: optional(string()),
         employee_type: optional(string()),
         dob: optional(
             pipe(
@@ -182,7 +175,7 @@ const UserFormLayout = () => {
         user_code: pipe(
             string(),
             minLength(1, 'User code is required'),
-            maxLength(10, 'User code can be a maximum of 10 characters')
+            maxLength(15, 'User code can be a maximum of 15 characters')
         ),
     });
 
@@ -195,9 +188,11 @@ const UserFormLayout = () => {
         last_name: '',
         email: '',
         password: '',
+        country_level_id: "",
         country_id: '',
         state_id: '',
         city_id: '',
+        user_level_id: "",
         region_id: '',
         branch_id: "",
         address: '',
@@ -205,7 +200,6 @@ const UserFormLayout = () => {
         dob: '',
         phone: '',
         photo: '',
-        website: '',
         status: false,
         reporting_manager_id: "",
         roles: [],
@@ -231,7 +225,9 @@ const UserFormLayout = () => {
             first_name: '',
             last_name: '',
             email: '',
+            user_level_id: "",
             password: '',
+            country_level_id: "",
             country_id: '',
             branch_id: "",
             state_id: '',
@@ -241,13 +237,8 @@ const UserFormLayout = () => {
             dob: '',
             phone: '',
             photo: '',
-            website: '',
             reporting_manager_id: "",
             status: false,
-            urn_no: '',
-            idfa_code: '',
-            application_no: '',
-            licence_no: '',
             roles: [],
             user_code: '',
             employee_type: '',
@@ -330,9 +321,9 @@ const UserFormLayout = () => {
             const participationTypesData = await doGet(`admin/participation_types?status=true`);
             const roleData = await doGet(`company/role`);
             const usersData = await doGet(`admin/company`)
+            const userLevelData = await doGet("company/user/level/data")
 
-            console.log("USer", usersData?.company);
-
+            const regionData = zoneData.flatMap(z => z.region);
 
             setCreateData(prevData => ({
                 ...prevData,
@@ -341,6 +332,8 @@ const UserFormLayout = () => {
                 department: departmentData,
                 zones: zoneData, // same here
                 branch: branchData,
+                region: regionData,
+                userLevelData,
                 usersData: usersData?.company,
                 participation_types: participationTypesData, // same here
                 roles: roleData, // same here
@@ -385,6 +378,7 @@ const UserFormLayout = () => {
             reset({
                 first_name: editData.first_name ?? '',
                 last_name: editData.last_name ?? '',
+                user_level_id: editData?.user_level_id ?? "",
                 email: editData.email ?? '',
                 alternative_email: editData.alternative_email ?? '',
                 phone: editData.phone ?? '',
@@ -394,12 +388,8 @@ const UserFormLayout = () => {
                 state_id: editData.state_id ?? '',
                 city_id: editData.city_id ?? '',
                 status: editData.status ?? '',
-                website: editData.website ?? '',
-                urn_no: editData.urn_no ?? '',
+                country_level_id: editData?.country_level_id ?? "",
                 reporting_manager_id: editData?.reporting_manager_id ?? "",
-                idfa_code: editData.idfa_code ?? '',
-                application_no: editData.application_no ?? '',
-                licence_no: editData.licence_no ?? '',
                 participation_type_id: editData.participation_type_id ?? '',
                 department_id: editData.department_id ?? '',
                 employee_type: editData.employee_type ?? '',
@@ -412,6 +402,11 @@ const UserFormLayout = () => {
                     : '',
                 designation_id: editData.designation_id ?? '',
             });
+
+            if (editData?.user_level_id) {
+
+                setSelectedUserLevel(editData?.user_level_id)
+            }
 
             if (editData.photo) {
                 setImgSrc(`${public_url}${editData.photo}`);
@@ -477,12 +472,13 @@ const UserFormLayout = () => {
                     formData.append(key, value);
                 }
             });
+
             setLoading(true);
 
             const response = await fetch(id ? `${URL}/admin/user/${id}` : `${URL}/admin/user`, {
                 method: id ? "PUT" : "POST",
                 headers: {
-                    Authorization: `Bearer ${token}` // ✅ No content-type here
+                    Authorization: `Bearer ${token}` //  No content-type here
                 },
                 body: formData
             });
@@ -939,74 +935,6 @@ const UserFormLayout = () => {
                                 3. Other Details
                             </Typography>
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Controller
-                                name="urn_no"
-                                control={control}
-                                render={({ field }) => (
-                                    <CustomTextField
-                                        {...field}
-                                        fullWidth
-                                        type="text"
-                                        label="URN Number"
-                                        placeholder="URN Number"
-                                        error={!!errors.gst_no}
-                                        helperText={errors.gst_no?.message}
-                                    />
-                                )}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Controller
-                                name="idfa_code"
-                                control={control}
-                                render={({ field }) => (
-                                    <CustomTextField
-                                        {...field}
-                                        fullWidth
-                                        type="text"
-                                        label="Employee ID/FA Code"
-                                        placeholder="Employee ID/FA Code"
-                                        error={!!errors.gst_no}
-                                        helperText={errors.gst_no?.message}
-                                    />
-                                )}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Controller
-                                name="application_no"
-                                control={control}
-                                render={({ field }) => (
-                                    <CustomTextField
-                                        {...field}
-                                        fullWidth
-                                        type="text"
-                                        label="Application Number"
-                                        placeholder="Application Number"
-                                        error={!!errors.gst_no}
-                                        helperText={errors.gst_no?.message}
-                                    />
-                                )}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Controller
-                                name="licence_no"
-                                control={control}
-                                render={({ field }) => (
-                                    <CustomTextField
-                                        {...field}
-                                        fullWidth
-                                        type="text"
-                                        label="Licence Number"
-                                        placeholder="Licence Number"
-                                        error={!!errors.gst_no}
-                                        helperText={errors.gst_no?.message}
-                                    />
-                                )}
-                            />
-                        </Grid>
 
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <Controller
@@ -1018,9 +946,9 @@ const UserFormLayout = () => {
                                         select
                                         fullWidth
                                         label="Designation"
-                                        value={field.value ?? ''} // ✅ ensure controlled
+                                        value={field.value ?? ''} //  ensure controlled
                                         onChange={(e) => {
-                                            field.onChange(e.target.value); // ✅ update RHF state
+                                            field.onChange(e.target.value); //  update RHF state
                                         }}
                                         error={!!errors.designation_id}
                                         helperText={errors.designation_id?.message}
@@ -1050,9 +978,9 @@ const UserFormLayout = () => {
                                         select
                                         fullWidth
                                         label="Department"
-                                        value={field.value ?? ''} // ✅ ensure controlled
+                                        value={field.value ?? ''} //  ensure controlled
                                         onChange={(e) => {
-                                            field.onChange(e.target.value); // ✅ update RHF state
+                                            field.onChange(e.target.value); //  update RHF state
                                         }}
                                         error={!!errors.department_id}
                                         helperText={errors.department_id?.message}
@@ -1081,10 +1009,10 @@ const UserFormLayout = () => {
                                         {...field}
                                         select
                                         fullWidth
-                                        label="Participation Type *"
-                                        value={field.value ?? ''} // ✅ ensure controlled
+                                        label="Participation Type"
+                                        value={field.value ?? ''} //  ensure controlled
                                         onChange={(e) => {
-                                            field.onChange(e.target.value); // ✅ update RHF state
+                                            field.onChange(e.target.value); //  update RHF state
                                         }}
                                         error={!!errors.participation_type_id}
                                         helperText={errors.participation_type_id?.message}
@@ -1113,9 +1041,9 @@ const UserFormLayout = () => {
                                         select
                                         fullWidth
                                         label="Employee type"
-                                        value={field.value ?? ''} // ✅ ensure controlled
+                                        value={field.value ?? ''} //  ensure controlled
                                         onChange={(e) => {
-                                            field.onChange(e.target.value); // ✅ update RHF state
+                                            field.onChange(e.target.value); //  update RHF state
                                         }}
                                         error={!!errors.employee_type}
                                         helperText={errors.employee_type?.message}
@@ -1131,46 +1059,131 @@ const UserFormLayout = () => {
 
                         </Grid>
 
-                        {/* Zone */}
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <Controller
-                                name="zone_id"
+                                name="user_level_id"
                                 control={control}
                                 render={({ field }) => (
                                     <CustomTextField
                                         {...field}
                                         select
                                         fullWidth
-                                        label="Zone"
+                                        label="User Level*"
                                         value={field.value ?? ""}
                                         onChange={(e) => {
                                             const rawValue = e.target.value;
                                             const value = rawValue === "undefined" || !rawValue ? "" : rawValue;
 
-                                            setSelectZone(value);
-                                            setSelectedRegion("");   // reset region
-                                            setSelectedBranch([]);   // reset branch
+                                            if (value == "69d3a36f9e57cff228594aea") {
+
+                                                setValue("region_id", "")
+                                                setValue("branch_id", "")
+                                            } else if (value == "69d3a36f9e57cff228594aeb") {
+
+                                                setValue("zone_id", "")
+                                                setValue("branch_id", "")
+
+                                            } else if (value == "69d3a36f9e57cff228594aed" || value == "69d3a36f9e57cff228594aec") {
+
+                                                setValue("zone_id", "")
+                                                setValue("region_id", "")
+                                            }
+
+                                            setSelectedUserLevel(value)
                                             field.onChange(value);
                                         }}
-                                        error={!!errors.zone_id}
-                                        helperText={errors.zone_id?.message}
+                                        error={!!errors.user_level_id}
+                                        helperText={errors.user_level_id?.message}
                                     >
-                                        {createData?.zones?.length > 0 ? (
-                                            createData.zones.map((item) => (
+                                        {createData?.userLevelData?.length > 0 ? (
+                                            createData.userLevelData.map((item) => (
                                                 <MenuItem key={item._id} value={item._id}>
-                                                    {item.name}
+                                                    {item.title}
                                                 </MenuItem>
                                             ))
                                         ) : (
-                                            <MenuItem disabled>No Zones</MenuItem>
+                                            <MenuItem disabled>No User Level</MenuItem>
                                         )}
                                     </CustomTextField>
                                 )}
                             />
                         </Grid>
 
+                        {selectedUserLevel == "69d75130d9daa00434648316" && (
+
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <Controller
+                                    name="country_level_id"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <CustomTextField
+                                            {...field}
+                                            select
+                                            fullWidth
+                                            label="Country*"
+                                            onChange={(e) => {
+
+                                                const selectedCountryId = e.target.value;
+
+                                                field.onChange(selectedCountryId); // update form value
+                                            }}
+                                            error={!!errors.country_level_id}
+                                            helperText={errors.country_level_id?.message}
+                                        >
+                                            {createData?.country?.length > 0 &&
+                                                createData.country.map((item, index) => (
+                                                    <MenuItem key={index} value={`${item.country_id}`}>
+                                                        {item.country_name}
+                                                    </MenuItem>
+                                                ))}
+                                        </CustomTextField>
+                                    )}
+                                />
+                            </Grid>
+
+                        )}
+
+                        {/* Zone */}
+                        {selectedUserLevel == "69d3a36f9e57cff228594aea" && (
+
+
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <Controller
+                                    name="zone_id"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <CustomTextField
+                                            {...field}
+                                            select
+                                            fullWidth
+                                            label="Zone*"
+                                            value={field.value ?? ""}
+                                            onChange={(e) => {
+                                                const rawValue = e.target.value;
+                                                const value = rawValue === "undefined" || !rawValue ? "" : rawValue;
+
+                                                field.onChange(value);
+                                            }}
+                                            error={!!errors.zone_id}
+                                            helperText={errors.zone_id?.message}
+                                        >
+                                            {createData?.zones?.length > 0 ? (
+                                                createData.zones.map((item) => (
+                                                    <MenuItem key={item._id} value={item._id}>
+                                                        {item.name}
+                                                    </MenuItem>
+                                                ))
+                                            ) : (
+                                                <MenuItem disabled>No Zones</MenuItem>
+                                            )}
+                                        </CustomTextField>
+                                    )}
+                                />
+                            </Grid>
+                        )}
+
                         {/* Region */}
-                        {selectRegion?.length > 0 && (
+                        {selectedUserLevel == "69d3a36f9e57cff228594aeb" && createData?.region?.length > 0 && (
                             <Grid size={{ xs: 12, sm: 4 }}>
                                 <Controller
                                     name="region_id"
@@ -1180,7 +1193,7 @@ const UserFormLayout = () => {
                                             {...field}
                                             select
                                             fullWidth
-                                            label="Region"
+                                            label="Region*"
                                             value={field.value ?? ""}
                                             onChange={(e) => {
                                                 const rawValue = e.target.value;
@@ -1195,8 +1208,8 @@ const UserFormLayout = () => {
                                             error={!!errors.region_id}
                                             helperText={errors.region_id?.message}
                                         >
-                                            {selectRegion.length > 0 ? (
-                                                selectRegion.map((item) => (
+                                            {createData?.region.length > 0 ? (
+                                                createData?.region.map((item) => (
                                                     <MenuItem key={item._id} value={item._id}>
                                                         {item.name}
                                                     </MenuItem>
@@ -1211,7 +1224,7 @@ const UserFormLayout = () => {
                         )}
 
                         {/* Branch */}
-                        {selectedBranch?.length > 0 && (
+                        {((selectedUserLevel == "69d3a36f9e57cff228594aed" || selectedUserLevel == "69d3a36f9e57cff228594aec") && createData?.branch?.length) > 0 && (
                             <Grid size={{ xs: 12, sm: 4 }}>
                                 <Controller
                                     name="branch_id"
@@ -1221,7 +1234,7 @@ const UserFormLayout = () => {
                                             {...field}
                                             select
                                             fullWidth
-                                            label="Branch"
+                                            label="Branch*"
                                             value={field.value ?? ""}
                                             onChange={(e) => {
                                                 const rawValue = e.target.value;
@@ -1232,8 +1245,8 @@ const UserFormLayout = () => {
                                             error={!!errors.branch_id}
                                             helperText={errors.branch_id?.message}
                                         >
-                                            {selectedBranch.length > 0 ? (
-                                                selectedBranch.map((item) => (
+                                            {createData?.branch.length > 0 ? (
+                                                createData?.branch?.map((item) => (
                                                     <MenuItem key={item.data._id} value={item.data._id}>
                                                         {item.data.name}
                                                     </MenuItem>
@@ -1248,56 +1261,45 @@ const UserFormLayout = () => {
                         )}
 
                         <Grid size={{ xs: 12, sm: 4 }}>
-
-
                             <Controller
                                 name="reporting_manager_id"
                                 control={control}
-                                defaultValue={false}
+                                defaultValue={null}
                                 render={({ field }) => (
-                                    <CustomTextField
-                                        {...field}
-                                        select
-                                        fullWidth
-                                        label="Reporting Manager"
-                                        value={field.value ?? ''} // ✅ ensure controlled
-                                        onChange={(e) => {
-                                            field.onChange(e.target.value); // ✅ update RHF state
+                                    <Autocomplete
+                                        size='md'
+                                        options={userList || []}
+                                        getOptionLabel={(option) =>
+                                            option
+                                                ? `${option.first_name} ${option.last_name}${option?.designation_id?.name
+                                                    ? ` (${option.designation_id.name})`
+                                                    : ""
+                                                }`
+                                                : ""
+                                        }
+                                        value={
+                                            userList?.find((user) => user._id === field.value) || null
+                                        }
+                                        onChange={(event, newValue) => {
+                                            field.onChange(newValue?._id || null);
                                         }}
-                                        error={!!errors.department_id}
-                                        helperText={errors.department_id?.message}
-                                    >
-                                        {userList?.length > 0 ? (
-                                            userList.map((item) => (
-                                                <MenuItem key={item._id} value={item._id}>
-                                                    {item?.first_name} {" "} {item?.last_name}
-                                                </MenuItem>
-                                            ))
-                                        ) : (
-                                            <MenuItem disabled>No User Found</MenuItem>
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Reporting Manager"
+                                                error={!!errors.reporting_manager_id}
+                                                helperText={errors.reporting_manager_id?.message}
+                                            />
                                         )}
-                                    </CustomTextField>
-                                )}
-                            />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Controller
-                                name="website"
-                                control={control}
-                                render={({ field }) => (
-                                    <CustomTextField
-                                        {...field}
-                                        fullWidth
-                                        type="text"
-                                        label="Website"
-                                        placeholder="Website"
-                                        error={!!errors.website}
-                                        helperText={errors.website?.message}
+                                        isOptionEqualToValue={(option, value) =>
+                                            option._id === value._id
+                                        }
+                                        noOptionsText="No User Found"
                                     />
                                 )}
                             />
                         </Grid>
+
                         <Grid size={{ xs: 12, sm: 4 }}>
 
 

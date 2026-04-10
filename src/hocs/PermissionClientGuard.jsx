@@ -66,7 +66,7 @@ export default function PermissionGuard({ children, locale, element }) {
 
                 if (permissions?.isUser) {
 
-                    redirect(`/${locale}/dashboard/user/${'learner'}`);
+                    redirect(`/${locale}/dashboard/user/${'sales'}`);
                 }
 
                 if (permissions?.notUser) {

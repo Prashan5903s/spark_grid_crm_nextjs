@@ -25,8 +25,8 @@ import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 
 export const metadata = {
-  title: 'DW LMS',
-  description: 'DW LMS'
+  title: 'Spark Grid',
+  description: 'Spark Grid'
 }
 
 const RootLayout = async props => {

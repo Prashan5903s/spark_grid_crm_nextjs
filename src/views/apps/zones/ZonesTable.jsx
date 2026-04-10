@@ -96,7 +96,7 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
     const fetchPermissions = async () => {
       try {
         const result = await getPermissions();
-        
+
         setPermissions(result);
       } catch (error) {
         console.error('Error fetching permissions:', error);
@@ -150,6 +150,14 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
       cell: ({ row }) => (
         <Typography className='capitalize' color='text.primary'>
           {row.original.name}
+        </Typography>
+      )
+    }),
+    columnHelper.accessor('country_name', {
+      header: 'Country',
+      cell: ({ row }) => (
+        <Typography className='capitalize' color='text.primary'>
+          {row.original.country?.country_name || ""}
         </Typography>
       )
     }),

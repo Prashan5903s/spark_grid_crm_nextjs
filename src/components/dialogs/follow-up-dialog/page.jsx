@@ -25,7 +25,8 @@ import {
     pipe,
     minLength,
     optional,
-    custom
+    custom,
+    any
 } from 'valibot'
 
 import { useSession } from 'next-auth/react'
@@ -44,7 +45,7 @@ const schema = object(
         notes: optional(string()),
         status: pipe(string(), minLength(1, 'Status is required')),
         priority: pipe(string(), minLength(1, 'Priority is required')),
-        reminder_before: optional(string())
+        reminder_before: optional(any())
     },
     [
         custom(
@@ -73,6 +74,7 @@ const FollowUpDialog = ({
     open,
     setOpen,
     fetchLeadsData,
+    isChange = false,
     selectedLead,
     selectedLeadId
 }) => {
@@ -101,7 +103,7 @@ const FollowUpDialog = ({
             notes: '',
             status: '',
             priority: '',
-            reminder_before: ''
+            reminder_before: 10
         }
     })
 
@@ -174,6 +176,7 @@ const FollowUpDialog = ({
         setLoading(true)
 
         try {
+
             const payload = {
                 ...values,
                 next_follow_up_date: values.next_follow_up_date || null,
@@ -182,9 +185,9 @@ const FollowUpDialog = ({
             }
 
             const response = await fetch(
-                `${API_URL}/user/follow-up/post/${selectedLeadId}`,
+                isChange ? `${API_URL}/user/follow-up/put/data/${selectedLeadId}` : `${API_URL}/user/follow-up/post/${selectedLeadId}`,
                 {
-                    method: 'POST',
+                    method: isChange ? 'PUT' : 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`
@@ -210,25 +213,52 @@ const FollowUpDialog = ({
         }
     }
 
+    useEffect(() => {
+        if (selectedLead && isChange && open) {
+
+            const formatDate = (date) => {
+                if (!date) return ""
+                
+                return new Date(date).toISOString().split('T')[0] // YYYY-MM-DD
+            }
+
+            const formatDateTime = (date) => {
+                if (!date) return ""
+                
+                return new Date(date).toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm
+            }
+
+            console.log("Lead", selectedLead?.lead_data);
+
+
+            reset({
+                status: selectedLead?.status || '',
+                follow_up_type: selectedLead?.follow_up_type || "",
+                priority: selectedLead?.priority || "",
+                lead_status_id: selectedLead?.lead_data?.lead_status_id || "",
+                notes: selectedLead?.notes || "",
+                reminder_before: selectedLead?.reminder_before || "",
+                follow_up_date: formatDate(selectedLead?.follow_up_date),
+                next_follow_up_date: formatDateTime(selectedLead?.next_follow_up_date),
+            })
+        }
+    }, [selectedLead, isChange, open])
+
     return (
         <Dialog
             fullWidth
             maxWidth="lg"
+            scroll="body"
             open={open}
-            sx={{
-                '& .MuiDialog-paper': {
-                    overflow: 'visible',
-                    borderRadius: 3,
-                    p: 2
-                }
-            }}
+            closeAfterTransition={false}
+            sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
         >
             <DialogCloseButton onClick={handleClose}>
                 <i className="tabler-x" />
             </DialogCloseButton>
 
             <DialogTitle className="text-center" sx={{ fontWeight: 600 }}>
-                Add Follow Up
+                {isChange ? "Edit" : "Add"} Follow Up
             </DialogTitle>
 
             {/* ================= LEAD INFO ================= */}
@@ -236,22 +266,22 @@ const FollowUpDialog = ({
                 <Grid container spacing={2}>
                     <Grid item size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption">Company</Typography>
-                        <Typography fontWeight={500}>{selectedLead?.company_name || '-'}</Typography>
+                        <Typography fontWeight={500}>{isChange ? selectedLead?.lead_data?.company_name : selectedLead?.company_name || '-'}</Typography>
                     </Grid>
 
                     <Grid item size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption">Name</Typography>
-                        <Typography fontWeight={500}>{selectedLead?.name || '-'}</Typography>
+                        <Typography fontWeight={500}>{isChange ? selectedLead?.lead_data?.name : selectedLead?.name || '-'}</Typography>
                     </Grid>
 
                     <Grid item size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption">Email</Typography>
-                        <Typography>{selectedLead?.email || '-'}</Typography>
+                        <Typography>{isChange ? selectedLead?.lead_data?.email : selectedLead?.email || '-'}</Typography>
                     </Grid>
 
                     <Grid item size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption">Phone</Typography>
-                        <Typography>{selectedLead?.phone || '-'}</Typography>
+                        <Typography>{isChange ? selectedLead?.lead_data?.phone : selectedLead?.phone || '-'}</Typography>
                     </Grid>
                 </Grid>
             </Card>
@@ -353,7 +383,14 @@ const FollowUpDialog = ({
                                 name="reminder_before"
                                 control={control}
                                 render={({ field }) => (
-                                    <CustomTextField {...field} fullWidth type="number" label="Reminder (minutes)" />
+                                    <CustomTextField
+                                        {...field}
+                                        fullWidth
+                                        type="number"
+                                        label="Reminder (minutes)"
+                                        error={!!errors.reminder_before}
+                                        helperText={errors.reminder_before?.message}
+                                    />
                                 )}
                             />
                         </Grid>

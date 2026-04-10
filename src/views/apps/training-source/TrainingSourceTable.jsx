@@ -64,7 +64,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 
 const columnHelper = createColumnHelper()
 
-const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
+const DownloadCenterTable = ({ tableData, fetchRoleData, isCompany = true }) => {
   // States
   const [role, setRole] = useState('')
   const [rowSelection, setRowSelection] = useState({})
@@ -132,91 +132,128 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
 
   }
 
-  const columns = useMemo(() => [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          indeterminate={table.getIsSomeRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          disabled={!row.getCanSelect()}
-          indeterminate={row.getIsSomeSelected()}
-          onChange={row.getToggleSelectedHandler()}
-        />
-      )
-    },
-    columnHelper.accessor('name', {
-      header: 'Name',
-      cell: ({ row }) => (
-        <Typography className='capitalize' color='text.primary'>
-          {row?.original?.report_type}
-        </Typography>
-      )
-    }),
-    columnHelper.accessor('reported_on', {
-      header: 'Reported On',
-      cell: ({ row }) => (
-        <Typography variant='body2' color='text.secondary'>
-          {
-            row?.original?.created_at
-              ? new Date(row.original.created_at).toLocaleString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })
-              : 'N/A'
-          }
-        </Typography>
-      )
-    }),
-    columnHelper.accessor('status', {
-      header: 'Status',
-      cell: ({ row }) => (
-        <Chip
-          label={row?.original?.status}
-          color={statusColor(row?.original?.status)}
-          variant='tonal'
-          size='small'
-        />
-      )
-    }),
-    columnHelper.accessor('action', {
-      header: 'Actions',
-      cell: ({ row }) => {
-        const fileUrl = `${assert_url}/uploads/exportCenter/${row?.original?.file_path}`;
+  const publicURL = process.env.NEXT_PUBLIC_ASSETS_URL;
 
-        const handleDownload = () => {
-          const link = document.createElement('a');
-
-          link.href = fileUrl;
-          link.download = row?.original?.file_path || 'report.xlsx'; // default name
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        };
-
-        return (
-          <div className='flex items-center'>
-            {(
-              <IconButton onClick={handleDownload} disabled={row?.original?.progress_percent != 100}>
-                <i className='tabler-download text-textSecondary' />
-              </IconButton>
-            )}
-          </div>
-        );
+  const columns = useMemo(() => {
+    const cols = [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllRowsSelected()}
+            indeterminate={table.getIsSomeRowsSelected()}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            indeterminate={row.getIsSomeSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        )
       },
-      enableSorting: false
-    })
-  ], [permissions])
+
+      columnHelper.accessor('title', {
+        header: 'Title',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row?.original?.title}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('description', {
+        header: 'Description',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row?.original?.description}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('file', {
+        header: 'File/Document',
+        cell: ({ row }) => {
+          const filePath = row?.original?.file_path;
+          const fileUrl = `${publicURL}/export_center/${filePath}`;
+
+          const handleDownload = () => {
+            if (!filePath) return;
+
+            const link = document.createElement('a');
+            
+            link.href = fileUrl;
+            link.setAttribute('download', filePath);
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          return (
+            <IconButton onClick={handleDownload}>
+              <i className='tabler-download' />
+            </IconButton>
+          );
+        }
+      }),
+
+      columnHelper.accessor('created_at', {
+        header: 'Created At',
+        cell: ({ row }) => (
+          <Typography>
+            {row?.original?.created_at
+              ? new Date(row.original.created_at).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              })
+              : 'N/A'}
+          </Typography>
+        )
+      })
+    ];
+
+    //  Add User Count column conditionally
+    if (isCompany) {
+      cols.push(
+        columnHelper.accessor('user_count', {
+          header: 'User Count',
+          cell: ({ row }) => (
+            <Typography color='text.primary'>
+              {row?.original?.allowedUser?.length || 0}
+            </Typography>
+          )
+        })
+      );
+    }
+
+    //  Add Actions column conditionally
+    if (isCompany) {
+      cols.push(
+        columnHelper.accessor('action', {
+          header: 'Actions',
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton
+                onClick={() => {
+                  setSelectedRole(row?.original);
+                  setOpenDialog(true);
+                }}
+              >
+                <i className='tabler-edit' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      );
+    }
+
+    return cols;
+  }, [isCompany, permissions]);
 
   const table = useReactTable({
     data: filteredData,
@@ -265,9 +302,16 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
             onChange={value => setGlobalFilter(String(value))}
             placeholder='Search...'
           />
-          <Button variant='contained' size='lg' onClick={() => setOpenDialog(true)}>
-            Add Training Source
-          </Button>
+          {isCompany && (
+
+            <Button variant='contained' size='lg' onClick={() => {
+
+              setOpenDialog(true)
+              setSelectedRole();
+            }}>
+              Add Document
+            </Button>
+          )}
         </div>
       </CardContent>
 
@@ -325,11 +369,10 @@ const DownloadCenterTable = ({ tableData, fetchRoleData }) => {
       {/* Role Dialog */}
       {openDialog && (
         <TrainingSourceDialog
-          tableData={tableData}
           open={openDialog}
           handleClose={handleClose}
           setOpen={setOpenDialog}
-          selectedRole={selectedRole}
+          data={selectedRole}
           fetchRoleData={fetchRoleData}
           permissionArr={permissions}
         />

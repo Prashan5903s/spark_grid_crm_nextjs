@@ -12,7 +12,7 @@ import SkeletonTableComponent from '@/components/skeleton/table/page'
 
 import TrainingSourceTable from './TrainingSourceTable'
 
-const TrainingSourceComponent = () => {
+const TrainingSourceComponent = ({ isCompany = true }) => {
 
     const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ const TrainingSourceComponent = () => {
 
     async function fetchRoleData() {
         try {
-            const response = await fetch(`${URL}/company/export/center/data`,
+            const response = await fetch(isCompany ? `${URL}/company/export/center/data` : `${URL}/user/export/user/data`,
                 {
                     method: "GET",
                     headers: {
@@ -61,7 +61,7 @@ const TrainingSourceComponent = () => {
         <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
                 <Typography variant='h4' className='mbe-1'>
-                    Training Sources List
+                    Documents List
                 </Typography>
             </Grid>
             <Grid>
@@ -69,7 +69,7 @@ const TrainingSourceComponent = () => {
             </Grid>
             <Grid size={{ xs: 12 }}>
                 {data ? (
-                    <TrainingSourceTable tableData={data} fetchRoleData={fetchRoleData} />
+                    <TrainingSourceTable tableData={data} fetchRoleData={fetchRoleData} isCompany={isCompany} />
                 )
                     : (
                         <SkeletonTableComponent />

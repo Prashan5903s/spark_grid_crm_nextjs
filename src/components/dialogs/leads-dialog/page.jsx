@@ -240,6 +240,35 @@ const LeadsDialog = ({
 
                 <DialogContent className="grid grid-cols-2 gap-4">
 
+                    {/* Lead Status */}
+                    {
+                        (
+
+
+                            <Controller
+                                name="lead_status_id"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <CustomTextField select {...field}
+                                        disabled={!isTable} label="Lead Status" fullWidth error={!!fieldState.error}
+                                        helperText={fieldState.error?.message}>
+                                        {(createData?.statusData?.length ?? 0) > 0 ? (
+                                            createData?.statusData?.map(item => (
+                                                <MenuItem key={item._id} value={item._id}>
+                                                    {item?.title || ""}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem disabled value="">
+                                                No Status Available
+                                            </MenuItem>
+                                        )}
+                                    </CustomTextField>
+                                )}
+                            />
+
+                        )}
+
                     {/* Name */}
                     <Controller
                         name="company_name"
@@ -387,34 +416,6 @@ const LeadsDialog = ({
                             />
                         )}
                     />
-
-                    {/* Lead Status */}
-                    {
-                        isTable && (
-
-
-                            <Controller
-                                name="lead_status_id"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <CustomTextField select {...field} label="Lead Status" fullWidth error={!!fieldState.error}
-                                        helperText={fieldState.error?.message}>
-                                        {(createData?.statusData?.length ?? 0) > 0 ? (
-                                            createData?.statusData?.map(item => (
-                                                <MenuItem key={item._id} value={item._id}>
-                                                    {item?.title || ""}
-                                                </MenuItem>
-                                            ))
-                                        ) : (
-                                            <MenuItem disabled value="">
-                                                No Status Available
-                                            </MenuItem>
-                                        )}
-                                    </CustomTextField>
-                                )}
-                            />
-
-                        )}
 
                     {/* Source */}
                     <Controller

@@ -70,6 +70,9 @@ const FollowUpTable = ({ open, setOpen, tableData, fetchRoleData, selectedLeadId
     useEffect(() => {
         if (tableData) {
 
+            console.log("table", tableData);
+            
+
             setFilteredData(tableData?.followUp)
         }
     }, [tableData])

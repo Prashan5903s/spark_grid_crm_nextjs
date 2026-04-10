@@ -153,28 +153,15 @@ const DateRangeWithPresets = ({ startDate, endDate, onChange }) => {
             }
         },
         {
-            label: "Last Day",
+            label: "This Week",
             action: () => {
-                const s = today.startOf("day").subtract(1, "day")
-                const e = today.endOf("day").subtract(1, "day")
+                const s = today.startOf("week")
+                const e = today.endOf("week")
                 
                 setStart(s)
                 setEnd(e)
                 setMonth(s)
-                setSelectedPreset("Last Day")
-                onChange(s, e)
-            }
-        },
-        {
-            label: "Tommorrow",
-            action: () => {
-                const s = today.startOf("day").add(1, "day")
-                const e = today.endOf("day").add(1, "day")
-                
-                setStart(s)
-                setEnd(e)
-                setMonth(s)
-                setSelectedPreset("Tommorrow")
+                setSelectedPreset("This Week")
                 onChange(s, e)
             }
         },
@@ -192,20 +179,7 @@ const DateRangeWithPresets = ({ startDate, endDate, onChange }) => {
             }
         },
         {
-            label: "Last 7 Days",
-            action: () => {
-                const s = today.subtract(6, "day")
-                const e = today
-                
-                setStart(s)
-                setEnd(e)
-                setMonth(s)
-                setSelectedPreset("Last 7 Days")
-                onChange(s, e)
-            }
-        },
-        {
-            label: "Current Month",
+            label: "This Month",
             action: () => {
                 const s = today.startOf("month")
                 const e = today.endOf("month")
@@ -213,20 +187,61 @@ const DateRangeWithPresets = ({ startDate, endDate, onChange }) => {
                 setStart(s)
                 setEnd(e)
                 setMonth(s)
-                setSelectedPreset("Current Month")
+                setSelectedPreset("This Month")
                 onChange(s, e)
             }
         },
         {
-            label: "Next Month",
+            label: "Last Month",
             action: () => {
-                const s = today.add(1, "month").startOf("month")
-                const e = today.add(1, "month").endOf("month")
+                const s = today.subtract(1, "month").startOf("month")
+                const e = today.subtract(1, "month").endOf("month")
                 
                 setStart(s)
                 setEnd(e)
                 setMonth(s)
-                setSelectedPreset("Next Month")
+                setSelectedPreset("Last Month")
+                onChange(s, e)
+            }
+        },
+        {
+            label: "This Quarter",
+            action: () => {
+                const currentQuarter = Math.floor(today.month() / 3)
+
+                const s = today.month(currentQuarter * 3).startOf("month")
+                const e = s.add(2, "month").endOf("month")
+
+                setStart(s)
+                setEnd(e)
+                setMonth(s)
+                setSelectedPreset("This Quarter")
+                onChange(s, e)
+            }
+        },
+        {
+            label: "Current Year",
+            action: () => {
+                const s = today.startOf("year")
+                const e = today.endOf("year")
+                
+                setStart(s)
+                setEnd(e)
+                setMonth(s)
+                setSelectedPreset("Current Year")
+                onChange(s, e)
+            }
+        },
+        {
+            label: "Last Year",
+            action: () => {
+                const s = today.subtract(1, "year").startOf("year")
+                const e = today.subtract(1, "year").endOf("year")
+                
+                setStart(s)
+                setEnd(e)
+                setMonth(s)
+                setSelectedPreset("Last Year")
                 onChange(s, e)
             }
         },
@@ -297,7 +312,7 @@ const DateRangeWithPresets = ({ startDate, endDate, onChange }) => {
                                 key={item.label}
                                 fullWidth
                                 sx={{
-                                    fontSize: 13, 
+                                    fontSize: 13,
                                     justifyContent: "flex-start",
                                     mb: 1,
                                     backgroundColor:

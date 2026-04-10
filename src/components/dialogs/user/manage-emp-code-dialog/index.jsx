@@ -52,7 +52,7 @@ const schema = object({
   user_code: pipe(
     string(),
     minLength(1, 'Employee ID is required'),
-    maxLength(255, 'Employee ID be a maximum of 10 characters')
+    maxLength(15, 'Employee ID be a maximum of 15 characters')
   ),
 });
 

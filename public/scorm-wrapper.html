@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <body style="margin:0">
+    <script>
+      // SCORM API stub
+      window.API = {
+        LMSInitialize: () => "true",
+        LMSFinish: () => "true",
+        LMSGetValue: (key) => "",
+        LMSSetValue: (key, value) => "true",
+        LMSCommit: () => "true",
+        LMSGetLastError: () => "0",
+        LMSGetErrorString: () => "No error",
+        LMSGetDiagnostic: () => "",
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const launch = params.get("launch");
+      if (!launch) document.body.innerHTML = "<p>No launch URL</p>";
+      else {
+        const iframe = document.createElement("iframe");
+        iframe.src = launch;
+        iframe.style.width = "100%";
+        iframe.style.height = "100vh";
+        iframe.style.border = "0";
+        document.body.appendChild(iframe);
+      }
+    </script>
+  </body>
+</html>
+  

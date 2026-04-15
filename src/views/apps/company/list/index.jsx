@@ -1,9 +1,5 @@
 'use client'
 
-// MUI Imports
-
-// Component Imports
-
 import { useEffect, useState } from 'react'
 
 import { useSession } from 'next-auth/react'

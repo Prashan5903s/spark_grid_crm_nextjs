@@ -3067,7 +3067,7 @@ const SettingComponent = ({ activities }) => {
 
 
   const dateInputStyle = {
-    width: "200px",
+    inlineSize: "200px",
     padding: "10px 12px",
     borderRadius: "8px",
     border: "1px solid #ccc",

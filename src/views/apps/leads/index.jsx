@@ -5,8 +5,6 @@ import { useState, useEffect } from 'react'
 
 import { useSession } from 'next-auth/react'
 
-import Typography from '@mui/material/Typography'
-
 import Grid from '@mui/material/Grid2'
 
 import SkeletonTableComponent from '@/components/skeleton/table/page'
@@ -16,7 +14,9 @@ import LeadTable from './LeadTable'
 const Lead = () => {
 
   const [leadsData, setLeadsData] = useState();
-  const [loading, setLoading] = useState(false);
+  const [view, setView] = useState('table')
+  const [isTable, setIsTable] = useState(true);
+  const [selectLeadStatusId, setSelectLeadStatusId] = useState()
 
   const URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -26,7 +26,7 @@ const Lead = () => {
 
   async function fetchLeadsData() {
     try {
-      const response = await fetch(`${URL}/user/leads/data`,
+      const response = await fetch(`${URL}/user/leads/data/${view}`,
         {
           method: "GET",
           headers: {
@@ -39,7 +39,6 @@ const Lead = () => {
 
       if (response.ok) {
 
-        setLoading(true);
         setLeadsData(datas?.data);
       } else {
 
@@ -47,27 +46,30 @@ const Lead = () => {
 
     } catch (error) {
       throw new Error(error);
-    } finally {
-      setLoading(true);
     }
   }
 
   useEffect(() => {
-    if (URL && token) {
+    if (URL && token && view) {
       fetchLeadsData();
     }
-  }, [token])
+  }, [token, view])
 
   return (
     <Grid container spacing={6}>
       <Grid size={{ xs: 12 }}>
-        <Typography variant='h4' className='mbe-1'>
-          Lead List
-        </Typography>
-      </Grid>
-      <Grid size={{ xs: 12 }}>
         {leadsData ? (
-          <LeadTable tableData={leadsData} fetchLeadsData={fetchLeadsData} />
+          <LeadTable
+            isTable={isTable}
+            setIsTable={setIsTable}
+            tableData={leadsData}
+            fetchLeadsData={fetchLeadsData}
+            view={view}
+            setView={setView}
+            setLeadsData={setLeadsData}
+            setSelectLeadStatusId={setSelectLeadStatusId}
+            selectLeadStatusId={selectLeadStatusId}
+          />
         )
           : (
             <SkeletonTableComponent />

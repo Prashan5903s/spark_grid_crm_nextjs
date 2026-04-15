@@ -83,7 +83,7 @@ const FollowUpTable = ({ open, setOpen, tableData, fetchRoleData, selectedLeadId
         if (!value) return '';
 
         const date = new Date(value);
-        
+
         if (isNaN(date)) return '';
 
         return date.toLocaleString('en-GB', {

@@ -3,17 +3,8 @@
 // React Imports
 import { useState, useMemo, useEffect } from 'react'
 
-// Next Imports
-import { useParams } from 'next/navigation'
-
 // MUI Imports
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import MenuItem from '@mui/material/MenuItem'
-import Chip from '@mui/material/Chip'
-import Typography from '@mui/material/Typography'
-import Checkbox from '@mui/material/Checkbox'
-import IconButton from '@mui/material/IconButton'
+import { Card, CardContent, MenuItem, Chip, Typography, Checkbox, IconButton, Button } from '@mui/material'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -32,15 +23,16 @@ import {
 } from '@tanstack/react-table'
 
 // Component Imports
-import OptionMenu from '@core/components/option-menu'
 import CustomTextField from '@core/components/mui/TextField'
 import TablePaginationComponent from '@components/TablePaginationComponent'
+import TrainingSourceDialog from '@components/dialogs/training-sources-dialog/page' // 👈 Update the path if needed
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import ZoneDialog from '@/components/dialogs/zone-dialog/page'
-import RegionDialog from '@/components/dialogs/region-dialog/page'
+
 import { usePermissionList } from '@/utils/getPermission'
+
+const assert_url = process.env.NEXT_PUBLIC_ASSETS_URL || ''
 
 // Filter function
 const fuzzyFilter = (row, columnId, value, addMeta) => {
@@ -49,7 +41,6 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
   addMeta({ itemRank })
 
   return itemRank.passed
-
 }
 
 // Debounced Input
@@ -66,31 +57,34 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
     }, debounce)
 
     return () => clearTimeout(timeout)
-
   }, [value])
 
   return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
-
 }
 
 const columnHelper = createColumnHelper()
 
-// States
-const ZonesTable = ({ tableData, fetchZoneData }) => {
+const DownloadCenterTable = ({ tableData, fetchRoleData, isCompany = true }) => {
+  // States
   const [role, setRole] = useState('')
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState([])
   const [filteredData, setFilteredData] = useState([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
-  const [openZoneDialog, setOpenZoneDialog] = useState(false)
-  const [selectedZone, setSelectedZone] = useState(null)
-  const [selectedRegion, setSelectedRegion] = useState(null)
-
-  const { lang: locale } = useParams()
+  const [selectedRole, setSelectedRole] = useState(null)
 
   const getPermissions = usePermissionList();
   const [permissions, setPermissions] = useState({});
+
+  useEffect(() => {
+    if (tableData) {
+
+
+      setData(tableData)
+      setFilteredData(tableData)
+    }
+  }, [tableData])
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -108,13 +102,6 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
     }
   }, [getPermissions]); // Include in dependency array
 
-  useEffect(() => {
-    if (tableData) {
-      setData(tableData)
-      setFilteredData(tableData)
-    }
-  }, [tableData])
-
   // Role filter effect
   useEffect(() => {
     const filtered = data.filter(user => {
@@ -126,81 +113,147 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
     setFilteredData(filtered)
   }, [role, data])
 
-  const columns = useMemo(() => [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          indeterminate={table.getIsSomeRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          disabled={!row.getCanSelect()}
-          indeterminate={row.getIsSomeSelected()}
-          onChange={row.getToggleSelectedHandler()}
-        />
-      )
-    },
-    columnHelper.accessor('name', {
-      header: 'Zone Name',
-      cell: ({ row }) => (
-        <Typography className='capitalize' color='text.primary'>
-          {row.original.name}
-        </Typography>
-      )
-    }),
-    columnHelper.accessor('country_name', {
-      header: 'Country',
-      cell: ({ row }) => (
-        <Typography className='capitalize' color='text.primary'>
-          {row.original.country?.country_name || ""}
-        </Typography>
-      )
-    }),
-    columnHelper.accessor('status', {
-      header: 'Status',
-      cell: ({ row }) => (
-        <Chip
-          label={row.original.status ? 'Active' : 'Inactive'}
-          color={row.original.status ? 'success' : 'default'}
-          variant='tonal'
-          size='small'
-        />
-      )
-    }),
-    columnHelper.accessor('action', {
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className='flex items-center'>
-          {permissions && permissions?.['hasRegionAddPermission'] && (
-            <IconButton
-              onClick={() => {
-                setSelectedRegion(row.original) // or {}
-                setOpenZoneDialog(true)
-              }}
-            >
-              <i className='tabler-plus text-primary' />
+  const statusColor = (status) => {
+
+    if (status == "completed") {
+
+      return "success"
+    } else if (status == "in_progress") {
+
+      return "warning"
+
+    } else if (status == "pending") {
+
+      return "default"
+    } else {
+
+      return "danger"
+    }
+
+  }
+
+  const publicURL = process.env.NEXT_PUBLIC_ASSETS_URL;
+
+  const columns = useMemo(() => {
+    const cols = [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllRowsSelected()}
+            indeterminate={table.getIsSomeRowsSelected()}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            indeterminate={row.getIsSomeSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        )
+      },
+
+      columnHelper.accessor('title', {
+        header: 'Title',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row?.original?.title}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('description', {
+        header: 'Description',
+        cell: ({ row }) => (
+          <Typography className='capitalize' color='text.primary'>
+            {row?.original?.description}
+          </Typography>
+        )
+      }),
+
+      columnHelper.accessor('file', {
+        header: 'File/Document',
+        cell: ({ row }) => {
+          const filePath = row?.original?.file_path;
+          const fileUrl = `${publicURL}/export_center/${filePath}`;
+
+          const handleDownload = () => {
+            if (!filePath) return;
+
+            const link = document.createElement('a');
+            
+            link.href = fileUrl;
+            link.setAttribute('download', filePath);
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          return (
+            <IconButton onClick={handleDownload}>
+              <i className='tabler-download' />
             </IconButton>
-          )}
-          {permissions && permissions?.['hasZoneEditPermission'] && (
-            <IconButton
-              onClick={() => {
-                setSelectedZone(row.original)
-                setOpenDialog(true)
-              }}
-            >
-              <i className='tabler-edit text-textSecondary' />
-            </IconButton>
-          )}
-        </div>
-      ),
-      enableSorting: false
-    })
-  ], [permissions])
+          );
+        }
+      }),
+
+      columnHelper.accessor('created_at', {
+        header: 'Created At',
+        cell: ({ row }) => (
+          <Typography>
+            {row?.original?.created_at
+              ? new Date(row.original.created_at).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              })
+              : 'N/A'}
+          </Typography>
+        )
+      })
+    ];
+
+    //  Add User Count column conditionally
+    if (isCompany) {
+      cols.push(
+        columnHelper.accessor('user_count', {
+          header: 'User Count',
+          cell: ({ row }) => (
+            <Typography color='text.primary'>
+              {row?.original?.allowedUser?.length || 0}
+            </Typography>
+          )
+        })
+      );
+    }
+
+    //  Add Actions column conditionally
+    if (isCompany) {
+      cols.push(
+        columnHelper.accessor('action', {
+          header: 'Actions',
+          cell: ({ row }) => (
+            <div className='flex items-center'>
+              <IconButton
+                onClick={() => {
+                  setSelectedRole(row?.original);
+                  setOpenDialog(true);
+                }}
+              >
+                <i className='tabler-edit' />
+              </IconButton>
+            </div>
+          ),
+          enableSorting: false
+        })
+      );
+    }
+
+    return cols;
+  }, [isCompany, permissions]);
 
   const table = useReactTable({
     data: filteredData,
@@ -220,6 +273,11 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
+
+  const handleClose = async () => {
+
+    setOpenDialog(false)
+  }
 
   return (
     <Card>
@@ -242,25 +300,18 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
             value={globalFilter ?? ''}
             className='max-sm:is-full min-is-[250px]'
             onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search Role'
+            placeholder='Search...'
           />
-          <CustomTextField
-            select
-            value={role}
-            onChange={e => setRole(e.target.value)}
-            id='roles-app-role-select'
-            className='max-sm:is-full sm:is-[160px]'
-            slotProps={{ select: { displayEmpty: true } }}
-          >
-            <MenuItem value=''>Select Role</MenuItem>
-            {tableData.map((item, index) => {
-              return (
-                <MenuItem key={index} value={item._id}>
-                  {item.name}
-                </MenuItem>
-              );
-            })}
-          </CustomTextField>
+          {isCompany && (
+
+            <Button variant='contained' size='lg' onClick={() => {
+
+              setOpenDialog(true)
+              setSelectedRole();
+            }}>
+              Add Document
+            </Button>
+          )}
         </div>
       </CardContent>
 
@@ -317,27 +368,17 @@ const ZonesTable = ({ tableData, fetchZoneData }) => {
 
       {/* Role Dialog */}
       {openDialog && (
-        <ZoneDialog
+        <TrainingSourceDialog
           open={openDialog}
+          handleClose={handleClose}
           setOpen={setOpenDialog}
-          selectedZone={selectedZone}
-          fetchZoneData={fetchZoneData}
-          tableData={tableData}
-        />
-      )}
-
-      {openZoneDialog && (
-        <RegionDialog
-          typeForm={true}
-          open={openZoneDialog}
-          setOpen={setOpenZoneDialog}
-          selectZone={selectedZone}
-          selectedRegion={selectedRegion}
-          fetchRegionData={fetchZoneData}
+          data={selectedRole}
+          fetchRoleData={fetchRoleData}
+          permissionArr={permissions}
         />
       )}
     </Card>
   )
 }
 
-export default ZonesTable
+export default DownloadCenterTable

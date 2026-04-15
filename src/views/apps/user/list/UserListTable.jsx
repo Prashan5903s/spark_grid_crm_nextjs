@@ -218,32 +218,36 @@ const UserListTable = ({ userData, loadData, setIsUserCardShow, getStatsCount })
           </div>
         )
       }),
+      columnHelper.accessor('designation', {
+        header: 'Designation',
+        cell: ({ row }) => <Typography>{row.original.designation_id.name}</Typography>
+      }),
+      columnHelper.accessor('roles', {
+        header: 'Role',
+        cell: ({ row }) => {
+          
+          const roles = row.original.roles || []
 
-      // columnHelper.accessor('role', {
-      //   header: 'Role',
-      //   cell: ({ row }) => (
-      //     <div className='flex items-center gap-2'>
-      //       <Icon
-      //         className={userRoleObj[row.original.role].icon}
-      //         sx={{ color: `var(--mui-palette-${userRoleObj[row.original.role].color}-main)` }}
-      //       />
-      //       <Typography className='capitalize' color='text.primary'>
-      //         {row.original.role}
-      //       </Typography>
-      //     </div>
-      //   )
-      // }),
-      // columnHelper.accessor('currentPlan', {
-      //   header: 'Plan',
-      //   cell: ({ row }) => (
-      //     <Typography className='capitalize' color='text.primary'>
-      //       {row.original.currentPlan}
-      //     </Typography>
-      //   )
-      // }),
-      columnHelper.accessor('email', {
-        header: 'Email',
-        cell: ({ row }) => <Typography>{row.original.email}</Typography>
+          return (
+            <div className="flex flex-wrap gap-1">
+              {roles.length > 0 ? (
+                roles.map((r) => (
+                  <Typography
+                    key={r._id}
+                    variant="body2"
+                    className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md"
+                  >
+                    {r.role_id?.name || 'N/A'}
+                  </Typography>
+                ))
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  No Roles
+                </Typography>
+              )}
+            </div>
+          )
+        }
       }),
       columnHelper.accessor('phone', {
         header: 'Phone',

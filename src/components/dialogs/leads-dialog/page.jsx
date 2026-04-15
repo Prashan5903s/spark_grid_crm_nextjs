@@ -51,7 +51,9 @@ const schema = object({
 
 const LeadsDialog = ({
     open,
+    isTable = true,
     setOpen,
+    selectLeadStatusId,
     selectedLead,
     fetchLeadsData,
 }) => {
@@ -75,12 +77,11 @@ const LeadsDialog = ({
         }
     }, [selectedStateId, createData])
 
-    const calledRef = useRef(false)
-
     const {
         control,
         handleSubmit,
         reset,
+        setValue,
         formState: { errors }
     } = useForm({
         resolver: valibotResolver(schema),
@@ -152,6 +153,8 @@ const LeadsDialog = ({
                 pincode: selectedLead?.pincode || '',
             })
             setSelectedStateId(selectedLead?.state_id)
+        } else if (selectLeadStatusId) {
+            setValue("lead_status_id", selectLeadStatusId)
         } else {
 
             reset({
@@ -170,7 +173,7 @@ const LeadsDialog = ({
                 pincode: '',
             })
         }
-    }, [open, selectedLead, reset])
+    }, [open, selectedLead, reset, selectLeadStatusId])
 
     const handleClose = () => {
         setOpen(false)
@@ -236,6 +239,35 @@ const LeadsDialog = ({
             <form onSubmit={handleSubmit(submitData)} noValidate>
 
                 <DialogContent className="grid grid-cols-2 gap-4">
+
+                    {/* Lead Status */}
+                    {
+                        (
+
+
+                            <Controller
+                                name="lead_status_id"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <CustomTextField select {...field}
+                                        disabled={!isTable} label="Lead Status" fullWidth error={!!fieldState.error}
+                                        helperText={fieldState.error?.message}>
+                                        {(createData?.statusData?.length ?? 0) > 0 ? (
+                                            createData?.statusData?.map(item => (
+                                                <MenuItem key={item._id} value={item._id}>
+                                                    {item?.title || ""}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem disabled value="">
+                                                No Status Available
+                                            </MenuItem>
+                                        )}
+                                    </CustomTextField>
+                                )}
+                            />
+
+                        )}
 
                     {/* Name */}
                     <Controller
@@ -382,28 +414,6 @@ const LeadsDialog = ({
                                 error={!!fieldState.error}
                                 helperText={fieldState.error?.message}
                             />
-                        )}
-                    />
-
-                    {/* Lead Status */}
-                    <Controller
-                        name="lead_status_id"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <CustomTextField select {...field} label="Lead Status" fullWidth error={!!fieldState.error}
-                                helperText={fieldState.error?.message}>
-                                {(createData?.statusData?.length ?? 0) > 0 ? (
-                                    createData?.statusData?.map(item => (
-                                        <MenuItem key={item._id} value={item._id}>
-                                            {item?.title || ""}
-                                        </MenuItem>
-                                    ))
-                                ) : (
-                                    <MenuItem disabled value="">
-                                        No Status Available
-                                    </MenuItem>
-                                )}
-                            </CustomTextField>
                         )}
                     />
 

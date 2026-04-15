@@ -23,8 +23,8 @@ exports["default"] = void 0;
  * Another way is to clear the cookie from the browser's Application/Storage tab and then reload the page.
  */
 var themeConfig = {
-  templateName: 'DW LMS',
-  homePageUrl: '/dashboard/lms',
+  templateName: 'Spark Grid',
+  homePageUrl: '/dashboard/crm',
   settingsCookieName: 'vuexy-mui-next-demo-1',
   mode: 'light',
 

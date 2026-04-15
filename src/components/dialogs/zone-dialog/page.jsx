@@ -9,11 +9,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  MenuItem,
   Button,
   CircularProgress,
   IconButton
 } from '@mui/material'
-
 import Grid from "@mui/material/Grid2";
 
 // Hook Form + Validation
@@ -25,33 +25,42 @@ import {
   array,
   pipe,
   minLength,
-  maxLength,
-  regex
+  maxLength
 } from 'valibot'
 
 // Components
-
 import { useSession } from 'next-auth/react'
 
 import { toast } from 'react-toastify'
 
 import CustomTextField from '@core/components/mui/TextField'
+
 import DialogCloseButton from '../DialogCloseButton'
 
-// Schema (status removed)
+// SIZE={{ XS: 12, }} Schema
 const zoneSchema = object({
-  name: pipe(string(), minLength(1, 'Zone name is required'), maxLength(50, 'Zone name max length is 50'))
+  name: pipe(string(), minLength(1, 'Zone name is required'), maxLength(50)),
+  country_id: pipe(string(), minLength(1, 'Country is required'))
 })
 
 const schema = object({
-  zones: pipe(array(zoneSchema), minLength(1, 'At least one zone must be added'), maxLength(50, 'Zone name max length is 50'))
+  zones: pipe(array(zoneSchema), minLength(1, 'At least one zone required'))
 })
 
-const ZoneDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, typeForm, tableData }) => {
+const ZoneDialog = ({
+  open,
+  setOpen,
+  fetchZoneData,
+  selectedZone,
+  tableData
+}) => {
 
   const { data: session } = useSession()
   const token = session?.user?.token
   const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+  const [createData, setCreateData] = useState()
+  const [loading, setLoading] = useState(false)
 
   const {
     control,
@@ -62,7 +71,7 @@ const ZoneDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, ty
   } = useForm({
     resolver: valibotResolver(selectedZone ? zoneSchema : schema),
     defaultValues: {
-      zones: [{ name: '' }]
+      zones: selectedZone ? { name: '', country_id: '' } : [{ name: '', country_id: '' }]
     }
   })
 
@@ -71,12 +80,32 @@ const ZoneDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, ty
     name: 'zones'
   })
 
-  const [loading, setLoading] = useState(false)
+  // SIZE={{ XS: 12, }} Fetch dropdown data
+  const fetchCreateData = async () => {
+    try {
+      const response = await fetch(`${API_URL}/company/zone/create/data`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      const result = await response.json()
+
+      if (response.ok) setCreateData(result?.data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   useEffect(() => {
-    if (open && selectedZone) {
+    if (API_URL && token && open) fetchCreateData()
+  }, [API_URL, token, open])
 
-      reset({ name: selectedZone.name })
+  // SIZE={{ XS: 12, }} Edit mode reset
+  useEffect(() => {
+    if (open && selectedZone) {
+      reset({
+        name: selectedZone.name,
+        country_id: selectedZone.country_id
+      })
     }
   }, [open, selectedZone])
 
@@ -85,49 +114,47 @@ const ZoneDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, ty
     setOpen(false)
   }
 
+  // SIZE={{ XS: 12, }} Submit
   const submitData = async (formData) => {
 
-    if (tableData && tableData.length > 0) {
+    // SIZE={{ XS: 12, }} Duplicate validation
+    if (tableData?.length) {
       let hasError = false;
 
       if (selectedZone) {
         const exist = tableData.find(item =>
-          item.name.trim().toLowerCase() === formData.name.trim().toLowerCase() &&
-          item._id.toString().trim() !== selectedZone._id.toString().trim()
-        );
+          item.name.toLowerCase() === formData.name.toLowerCase() &&
+          item._id !== selectedZone._id &&
+          item?.country_id == selectedZone?.country_id
+        )
 
         if (exist) {
-          setError('name', {
-            type: 'manual',
-            message: 'This name already exists.'
-          });
+          setError('name', { message: 'Zone already exists' })
 
-          return;
+          return
         }
       } else {
-        formData.zones.forEach((zoneInForm, index) => {
-          const name = zoneInForm.name?.trim();
+        formData.zones.forEach((zone, index) => {
+          const name = zone.name?.trim().toLowerCase()
+          const countryId = zone?.country_id.trim();
 
-          if (!name) return; // Skip empty names (optional)
+          const exists = tableData.some(
+            z => z.name.toLowerCase() === name && z.country_id === countryId
+          )
 
-          const existsInTable = tableData.some(zoneInTable =>
-            zoneInTable.name.trim().toLowerCase() === name.trim().toLowerCase()
-          );
+          const duplicate = formData.zones.filter(
+            z => z.name?.toLowerCase() === name && z.country_id === countryId
+          )
 
-          const duplicateInForm = formData.zones.filter(z =>
-            z.name?.trim().toLowerCase() === name.trim().toLowerCase()
-          );
-
-          if (existsInTable || duplicateInForm.length > 1) {
+          if (exists || duplicate.length > 1) {
             setError(`zones.${index}.name`, {
-              type: 'manual',
-              message: 'Zone name must be unique.'
-            });
-            hasError = true;
+              message: 'Zone must be unique'
+            })
+            hasError = true
           }
-        });
+        })
 
-        if (hasError) return;
+        if (hasError) return
       }
     }
 
@@ -149,19 +176,13 @@ const ZoneDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, ty
         body: JSON.stringify(formData)
       })
 
-      const data = await response.json()
-
       if (response.ok) {
+        toast.success(`Zone ${selectedZone ? 'updated' : 'created'} successfully`)
         fetchZoneData?.()
-        toast.success(`Zone(s) ${selectedZone ? 'updated' : 'added'} successfully!`, {
-          autoClose: 700
-        })
         handleClose()
-      } else {
-        console.error('Server error:', data)
       }
     } catch (err) {
-      console.error('Submit error:', err)
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -179,135 +200,139 @@ const ZoneDialog = ({ open, setOpen, title = '', fetchZoneData, selectedZone, ty
         <i className="tabler-x" />
       </DialogCloseButton>
 
-      <DialogTitle variant="h4" className="text-center sm:pbs-16 sm:pbe-6 sm:pli-16">
+      <DialogTitle align="center">
         {selectedZone ? 'Edit Zone' : 'Add Zone'}
       </DialogTitle>
 
-      <form onSubmit={handleSubmit(submitData)} noValidate>
-        <DialogContent className="overflow-visible flex flex-col gap-6 sm:pli-16">
+      <form onSubmit={handleSubmit(submitData)}>
+        <DialogContent>
+
+          {/*  EDIT MODE */}
           {selectedZone ? (
-            <Grid item size={{ xs: 12, md: 11,  }}>
-              <Controller
-                name={`name`}
-                control={control}
-                render={({ field }) => (
-                  <CustomTextField
-                    {...field}
-                    required
-                    label="Zone Name"
-                    placeholder="Enter zone name"
-                    fullWidth
-                    onKeyDown={(e) => {
-                      const key = e.key;
-                      const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', ' ']; // include space
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, }}>
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field }) => (
+                    <CustomTextField
+                      {...field}
+                      label="Zone Name"
+                      fullWidth
+                      error={!!errors.name}
+                      helperText={errors.name?.message}
+                    />
+                  )}
+                />
+              </Grid>
 
-                      // Allow A-Z, a-z, and space
-                      if (!/^[a-zA-Z ]$/.test(key) && !allowedKeys.includes(key)) {
-                        e.preventDefault();
-                      }
-                    }}
-
-                    onPaste={(e) => {
-                      const paste = e.clipboardData.getData('text');
-
-                      // Allow paste if it only contains letters and spaces
-                      if (!/^[a-zA-Z ]+$/.test(paste)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    error={!!errors?.name}
-                    helperText={errors?.name?.message}
-                  />
-                )}
-              />
+              <Grid size={{ xs: 12, }}>
+                <Controller
+                  name="country_id"
+                  control={control}
+                  render={({ field }) => (
+                    <CustomTextField
+                      {...field}
+                      select
+                      label="Country"
+                      value={field.value || ''}   //  prevents undefined
+                      fullWidth
+                      error={!!errors.country_id}
+                      helperText={errors.country_id?.message}
+                    >
+                      {createData?.country?.length > 0 ? (
+                        createData.country.map(c => (
+                          <MenuItem key={c.country_id} value={String(c.country_id)}>
+                            {c.country_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled value="">
+                          No countries available
+                        </MenuItem>
+                      )}
+                    </CustomTextField>
+                  )}
+                />
+              </Grid>
             </Grid>
           ) : (
             <>
-              {fields.map((field, index) => (
-                <Grid container spacing={2} key={field.id} alignItems="center">
-                  <Grid item size={{ xs: 12, md: 11,  }}>
+              {/* SIZE={{ XS: 12, }} CREATE MODE */}
+              {fields.map((item, index) => (
+                <Grid container spacing={2} key={item.id}>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Controller
                       name={`zones.${index}.name`}
                       control={control}
                       render={({ field }) => (
                         <CustomTextField
                           {...field}
-                          required
                           label="Zone Name"
-                          placeholder="Enter zone name"
                           fullWidth
-                          onKeyDown={(e) => {
-                            const key = e.key;
-                            const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', ' ']; // include space
-
-                            // Allow A-Z, a-z, and space
-                            if (!/^[a-zA-Z ]$/.test(key) && !allowedKeys.includes(key)) {
-                              e.preventDefault();
-                            }
-                          }}
-
-                          onPaste={(e) => {
-                            const paste = e.clipboardData.getData('text');
-
-                            // Allow paste if it only contains letters and spaces
-                            if (!/^[a-zA-Z ]+$/.test(paste)) {
-                              e.preventDefault();
-                            }
-                          }}
                           error={!!errors.zones?.[index]?.name}
                           helperText={errors.zones?.[index]?.name?.message}
                         />
                       )}
                     />
                   </Grid>
-                  <Grid item size={{ xs: 12, md: 1,  }} className="flex justify-end">
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`zones.${index}.country_id`}
+                      control={control}
+                      render={({ field }) => (
+                        <CustomTextField
+                          {...field}
+                          select
+                          label="Country"
+                          fullWidth
+                          value={field.value || ''}   //  prevents undefined
+                          error={!!errors.zones?.[index]?.country_id}
+                          helperText={errors.zones?.[index]?.country_id?.message}
+                        >
+                          {!createData ? (
+                            <MenuItem disabled>Loading...</MenuItem>
+                          ) : createData.country?.length > 0 ? (
+                            createData.country.map(c => (
+                              <MenuItem key={c.country_id} value={String(c.country_id)}>
+                                {c.country_name}
+                              </MenuItem>
+                            ))
+                          ) : (
+                            <MenuItem disabled>No countries found</MenuItem>
+                          )}
+                        </CustomTextField>
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, }}>
                     {fields.length > 1 && (
-                      <IconButton
-                        color="error"
-                        onClick={() => remove(index)}
-                        sx={{ mt: 1 }}
-                        aria-label="Remove zone"
-                      >
-                        <i className="tabler-x" />
+                      <IconButton onClick={() => remove(index)}>
+                        ✕
                       </IconButton>
                     )}
                   </Grid>
                 </Grid>
               ))}
-              <div>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => append({ name: '' })}
-                  startIcon={<i className="tabler-plus" />}
-                  sx={{ mt: 2, alignSelf: 'flex-start' }}
-                >
-                  Add more
-                </Button>
-              </div>
+
+              <Button
+                variant='outlined'
+                onClick={() => append({ name: '', country_id: '' })}
+              >
+                Add More
+              </Button>
             </>
           )}
         </DialogContent>
 
-        <DialogActions className="justify-center sm:pbe-16 sm:pli-16">
-          <Button variant="contained" type="submit" disabled={loading}>
-            {loading ? (
-              <CircularProgress
-                size={24}
-                sx={{
-                  color: 'white',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  mt: '-12px',
-                  ml: '-12px',
-                }}
-              />
-            ) : selectedZone ? 'Update' : 'Submit'}
+        <DialogActions sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <Button variant='contained' type="submit" disabled={loading}>
+            {loading ? <CircularProgress size={20} /> : 'Submit'}
           </Button>
-          <Button variant="tonal" color="secondary" onClick={handleClose}>
-            Cancel
-          </Button>
+          <Button variant='outlined' onClick={handleClose}>Cancel</Button>
         </DialogActions>
       </form>
     </Dialog>

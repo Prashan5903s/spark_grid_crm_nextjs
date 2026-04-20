@@ -40,10 +40,16 @@ import DateRangeComponent from "@/components/DateRangeDashboardComponent"
 
 import CustomTextField from "@/@core/components/mui/TextField";
 
+import PermissionGuard from "@/hocs/PermissionClientGuard";
+import { useParams } from "next/navigation";
+
 export default function Dashboard() {
+
   const URL = process.env.NEXT_PUBLIC_API_URL;
   const { data: session } = useSession() || {};
   const token = session?.user?.token;
+
+  const { lang } = useParams();
 
   const [dashboardData, setDashboardData] = useState(null);
   const [page, setPage] = useState(0);
@@ -217,102 +223,108 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <Box sx={{ p: { xs: 1, sm: 2 }, minHeight: "100vh" }}>
+      <PermissionGuard locale={lang} element={"isUser"}>
 
-        {/* ===== TOP CARDS SKELETON ===== */}
-        <Grid container spacing={2}>
-          {[...Array(4)].map((_, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
+
+        <Box sx={{ p: { xs: 1, sm: 2 }, minHeight: "100vh" }}>
+
+          {/* ===== TOP CARDS SKELETON ===== */}
+          <Grid container spacing={2}>
+            {[...Array(4)].map((_, i) => (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
+                <Card sx={{ borderRadius: 3 }}>
+                  <CardContent>
+                    <Skeleton variant="rounded" width={40} height={40} />
+                    <Skeleton width="60%" sx={{ mt: 1 }} />
+                    <Skeleton width="40%" height={30} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* ===== MAIN GRID SKELETON ===== */}
+          <Grid container spacing={2} mt={1}>
+
+            {/* BAR CHART */}
+            <Grid size={{ xs: 12, md: 5 }}>
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
-                  <Skeleton variant="rounded" width={40} height={40} />
-                  <Skeleton width="60%" sx={{ mt: 1 }} />
-                  <Skeleton width="40%" height={30} />
+                  <Skeleton width="50%" />
+                  <Skeleton variant="rounded" height={300} sx={{ mt: 2 }} />
                 </CardContent>
               </Card>
             </Grid>
-          ))}
-        </Grid>
 
-        {/* ===== MAIN GRID SKELETON ===== */}
-        <Grid container spacing={2} mt={1}>
+            {/* LINE CHART */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton width="40%" />
+                  <Skeleton variant="rounded" height={300} sx={{ mt: 2 }} />
+                </CardContent>
+              </Card>
+            </Grid>
 
-          {/* BAR CHART */}
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Skeleton width="50%" />
-                <Skeleton variant="rounded" height={300} sx={{ mt: 2 }} />
-              </CardContent>
-            </Card>
+            {/* FILTER + PERFORMANCE */}
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton width="40%" />
+                  <Skeleton variant="rounded" height={40} sx={{ mt: 2 }} />
+                  <Skeleton variant="rounded" height={40} sx={{ mt: 2 }} />
+                  <Skeleton variant="rounded" height={40} sx={{ mt: 2 }} />
+                </CardContent>
+              </Card>
+
+              <Card sx={{ mt: 2, borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton width="60%" />
+                  <Skeleton width="80%" sx={{ mt: 2 }} />
+                  <Skeleton width="70%" />
+                  <Skeleton width="50%" sx={{ mt: 2 }} />
+                  <Skeleton width="60%" />
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* ZONAL PERFORMANCE */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton width="50%" />
+                  <Skeleton variant="rounded" height={300} sx={{ mt: 2 }} />
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* TABLE */}
+            <Grid size={{ xs: 12, md: 7 }}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton width="40%" />
+
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      variant="rounded"
+                      height={30}
+                      sx={{ mt: 1 }}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            </Grid>
+
           </Grid>
+        </Box>
 
-          {/* LINE CHART */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Skeleton width="40%" />
-                <Skeleton variant="rounded" height={300} sx={{ mt: 2 }} />
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* FILTER + PERFORMANCE */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Skeleton width="40%" />
-                <Skeleton variant="rounded" height={40} sx={{ mt: 2 }} />
-                <Skeleton variant="rounded" height={40} sx={{ mt: 2 }} />
-                <Skeleton variant="rounded" height={40} sx={{ mt: 2 }} />
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mt: 2, borderRadius: 3 }}>
-              <CardContent>
-                <Skeleton width="60%" />
-                <Skeleton width="80%" sx={{ mt: 2 }} />
-                <Skeleton width="70%" />
-                <Skeleton width="50%" sx={{ mt: 2 }} />
-                <Skeleton width="60%" />
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* ZONAL PERFORMANCE */}
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Skeleton width="50%" />
-                <Skeleton variant="rounded" height={300} sx={{ mt: 2 }} />
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* TABLE */}
-          <Grid size={{ xs: 12, md: 7 }}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Skeleton width="40%" />
-
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    variant="rounded"
-                    height={30}
-                    sx={{ mt: 1 }}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-
-        </Grid>
-      </Box>
+      </PermissionGuard>
     );
   }
 
   return (
+
     <Box sx={{ p: { xs: 1, sm: 2 }, minHeight: "100vh" }}>
 
       {/* ===== TOP CARDS ===== */}

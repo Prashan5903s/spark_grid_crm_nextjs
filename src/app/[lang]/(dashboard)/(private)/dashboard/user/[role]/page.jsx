@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useParams } from "next/navigation";
+
 import { useSession } from "next-auth/react";
 
 import {
@@ -41,7 +43,7 @@ import DateRangeComponent from "@/components/DateRangeDashboardComponent"
 import CustomTextField from "@/@core/components/mui/TextField";
 
 import PermissionGuard from "@/hocs/PermissionClientGuard";
-import { useParams } from "next/navigation";
+
 
 export default function Dashboard() {
 
@@ -431,7 +433,9 @@ export default function Dashboard() {
               />
 
 
-              // COnditional rendering based on user level to show/hide zone and region filters
+
+
+              {/* // COnditional rendering based on user level to show/hide zone and region filters */}
 
               {(dashboardData?.userLevel !== "69d3a36f9e57cff228594aeb" && dashboardData?.userLevel !== "69d75130d9daa00434648316" && dashboardData?.userLevel !== "69d3a36f9e57cff228594aec" && dashboardData?.userLevel !== "69d3a36f9e57cff228594aed") && (
 

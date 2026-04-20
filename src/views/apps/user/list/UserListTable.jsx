@@ -220,12 +220,12 @@ const UserListTable = ({ userData, loadData, setIsUserCardShow, getStatsCount })
       }),
       columnHelper.accessor('designation', {
         header: 'Designation',
-        cell: ({ row }) => <Typography>{row.original.designation_id.name}</Typography>
+        cell: ({ row }) => <Typography>{row.original?.designation_id?.name}</Typography>
       }),
       columnHelper.accessor('roles', {
         header: 'Role',
         cell: ({ row }) => {
-          
+
           const roles = row.original.roles || []
 
           return (
@@ -237,7 +237,7 @@ const UserListTable = ({ userData, loadData, setIsUserCardShow, getStatsCount })
                     variant="body2"
                     className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md"
                   >
-                    {r.role_id?.name || 'N/A'}
+                    {r?.role_id?.name || 'N/A'}
                   </Typography>
                 ))
               ) : (

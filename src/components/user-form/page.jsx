@@ -423,8 +423,7 @@ const UserFormLayout = () => {
             }
 
             if (editData.zone_id) {
-
-               setSelectZone(editData.zone_id);
+                setSelectZone(editData.zone_id);
             }
 
             if (editData.region_id) {

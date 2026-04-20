@@ -206,7 +206,7 @@ export default function Dashboard() {
 
     } else {
 
-      if (dashboardData?.branchData) {
+      if (dashboardData?.branchData && (dashboardData?.userLevel === "69d3a36f9e57cff228594aec" || dashboardData?.userLevel === "69d3a36f9e57cff228594aed")) {
 
         setSelectedBranchData(dashboardData?.branchData);
       } else {
@@ -437,7 +437,7 @@ export default function Dashboard() {
 
               {/* // COnditional rendering based on user level to show/hide zone and region filters */}
 
-              {(dashboardData?.userLevel !== "69d3a36f9e57cff228594aeb" && dashboardData?.userLevel !== "69d75130d9daa00434648316" && dashboardData?.userLevel !== "69d3a36f9e57cff228594aec" && dashboardData?.userLevel !== "69d3a36f9e57cff228594aed") && (
+              {(dashboardData?.userLevel !== "69d3a36f9e57cff228594aeb" && dashboardData?.userLevel !== "69d3a36f9e57cff228594aec" && dashboardData?.userLevel !== "69d3a36f9e57cff228594aed") && (
 
                 <Controller
                   name="zone_id"

@@ -853,6 +853,7 @@ export default function LeadsPage({
       {/* KANBAN */}
       {view === 'kanban' && (
         <div className="flex gap-4 overflow-x-auto p-4">
+
           {(finalData ? finalData : tableData)?.map((col, index) => {
 
             const filteredLeads = (col?.leads || []);

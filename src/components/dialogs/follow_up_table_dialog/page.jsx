@@ -140,6 +140,12 @@ const FollowUpTable = ({ open, setOpen, tableData, fetchRoleData, selectedLeadId
                 <Typography>{row?.original?.priority_data?.title || ""}</Typography>
             )
         }),
+        columnHelper.accessor('notes', {
+            header: 'Notes',
+            cell: ({ row }) => (
+                <Typography>{row?.original?.notes || ""}</Typography>
+            )
+        }),
         columnHelper.accessor('status', {
             header: 'Status',
             cell: ({ row }) => (

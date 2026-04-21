@@ -9,6 +9,8 @@ import { useSession } from "next-auth/react";
 import {
   Box,
   Typography,
+  Checkbox,
+  ListItemText,
   Card,
   MenuItem,
   CardContent,
@@ -461,7 +463,8 @@ export default function Dashboard() {
                       {dashboardData?.zoneData?.length > 0 ? (
                         dashboardData.zoneData.map((item) => (
                           <MenuItem key={item._id} value={item._id}>
-                            {item.name}
+                            <Checkbox checked={field.value.indexOf(item._id) > -1} />
+                            <ListItemText primary={item.name} />
                           </MenuItem>
                         ))
                       ) : (
@@ -496,7 +499,8 @@ export default function Dashboard() {
                       {regions.length > 0 ? (
                         regions.map((r) => (
                           <MenuItem key={r._id} value={r._id}>
-                            {r.name}
+                            <Checkbox checked={field.value.indexOf(r._id) > -1} />
+                            <ListItemText primary={r.name} />
                           </MenuItem>
                         ))
                       ) : (
@@ -531,7 +535,8 @@ export default function Dashboard() {
                     {branches.length > 0 ? (
                       branches.map((b) => (
                         <MenuItem key={b._id} value={b._id}>
-                          {b.name}
+                          <Checkbox checked={field.value.indexOf(b._id) > -1} />
+                          <ListItemText primary={b.name} />
                         </MenuItem>
                       ))
                     ) : (

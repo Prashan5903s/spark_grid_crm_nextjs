@@ -148,7 +148,7 @@ const FollowUpTable = ({ open, setOpen, tableData, fetchRoleData, selectedLeadId
 
         const limitedText = notes
           .split(" ")
-          .slice(0, 50)
+          .slice(0, 20)
           .join(" ");
 
         return (
@@ -156,7 +156,7 @@ const FollowUpTable = ({ open, setOpen, tableData, fetchRoleData, selectedLeadId
 
             {limitedText}
 
-            {notes.split(" ").length > 50 ? "..." : ""}
+            {notes.split(" ").length > 20 ? "..." : ""}
           </Typography>
         );
       }

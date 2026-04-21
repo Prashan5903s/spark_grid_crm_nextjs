@@ -21,6 +21,7 @@ import {
   TableHead,
   TableRow,
   TableCell,
+  TableContainer,
   TableBody,
 } from "@mui/material";
 
@@ -328,7 +329,6 @@ export default function Dashboard() {
   }
 
   return (
-
     <Box sx={{ p: { xs: 1, sm: 2 }, minHeight: "100vh" }}>
 
       {/* ===== TOP CARDS ===== */}
@@ -337,18 +337,22 @@ export default function Dashboard() {
           { label: "Total Leads", value: dashboardData?.totalLead || 0, icon: "tabler-user" },
           { label: "Converted Clients", value: dashboardData?.totalConverted || 0, icon: "tabler-user-check" },
           {
-            label: "Conversion %", value: Number(dashboardData?.convertPerc || 0).toFixed(2) == "0.00" ? 0 : Number(dashboardData?.convertPerc).toFixed(2), icon: "tabler-chart-pie"
+            label: "Conversion %",
+            value:
+              Number(dashboardData?.convertPerc || 0).toFixed(2) === "0.00"
+                ? 0
+                : Number(dashboardData?.convertPerc).toFixed(2),
+            icon: "tabler-chart-pie",
           },
           { label: "Pending Leads", value: dashboardData?.isPending || 0, icon: "tabler-clock" },
         ].map((item, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <Card sx={{ borderRadius: 3 }}>
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }} key={i}>
+            <Card sx={{ borderRadius: 3, height: "100%" }}>
               <CardContent>
-                {/* Styled Icon */}
                 <Box
                   sx={{
-                    inlineSize: 40,
-                    blockSize: 40,
+                    width: 40,
+                    height: 40,
                     borderRadius: "12px",
                     display: "flex",
                     alignItems: "center",
@@ -360,9 +364,11 @@ export default function Dashboard() {
                 >
                   <i className={item.icon} style={{ fontSize: 20 }} />
                 </Box>
+
                 <Typography fontSize={12} color="text.secondary">
                   {item.label}
                 </Typography>
+
                 <Typography variant="h5" fontWeight={700}>
                   {item.value}
                 </Typography>
@@ -375,54 +381,60 @@ export default function Dashboard() {
       {/* ===== MAIN GRID ===== */}
       <Grid container spacing={2} mt={1}>
 
-        {/* BAR */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Card sx={{ borderRadius: 3 }}>
+        {/* BAR CHART */}
+        <Grid item size={{ xs: 12, md: 12, lg: 6 }}>
+          <Card sx={{ borderRadius: 3, height: "100%" }}>
             <CardContent>
               <Typography fontWeight={600}>
                 Total Leads vs Converted
               </Typography>
 
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="total" fill="#2563eb" />
-                  <Bar dataKey="converted" fill="#10b981" />
-                </BarChart>
-              </ResponsiveContainer>
+              <Box sx={{ width: "100%", height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="total" fill="#2563eb" />
+                    <Bar dataKey="converted" fill="#10b981" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* LINE */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ borderRadius: 3 }}>
+        {/* LINE CHART */}
+        <Grid item size={{ xs: 12, md: 12, lg: 6 }}>
+          <Card sx={{ borderRadius: 3, height: "100%" }}>
             <CardContent>
               <Typography fontWeight={600}>Trend</Typography>
 
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={trendData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line dataKey="leads" stroke="#2563eb" />
-                  <Line dataKey="conv" stroke="#10b981" />
-                  <Line dataKey="ratio" stroke="#94a3b8" />
-                </LineChart>
-              </ResponsiveContainer>
+              <Box sx={{ width: "100%", height: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line dataKey="leads" stroke="#2563eb" />
+                    <Line dataKey="conv" stroke="#10b981" />
+                    <Line dataKey="ratio" stroke="#94a3b8" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
         {/* FILTER + PERFORMANCE */}
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid item size={{ xs: 12, md: 12, lg: 4 }}>
           <Card sx={{ borderRadius: 3 }}>
             <CardContent>
-              <Typography fontWeight={600} mb={2}>Filters</Typography>
+              <Typography fontWeight={600} mb={2}>
+                Filters
+              </Typography>
 
               <DateRangeComponent
                 startDate={startDate}
@@ -557,6 +569,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
+          {/* PERFORMANCE */}
           <Card sx={{ mt: 2, borderRadius: 3 }}>
             <CardContent>
               <Typography fontWeight={600}>
@@ -569,7 +582,7 @@ export default function Dashboard() {
 
               <Typography fontSize={12} color="green">
                 {dashboardData
-                  ? `${dashboardData?.performance?.maxUser?.user?.first_name} ${dashboardData?.performance?.maxUser?.user?.last_name} (${dashboardData?.performance?.maxUser?.totalLeads})`
+                  ? `${dashboardData?.performance?.maxUser?.user?.first_name} ${dashboardData?.performance?.maxUser?.user?.last_name}`
                   : "No Data"}
               </Typography>
 
@@ -581,123 +594,81 @@ export default function Dashboard() {
 
               <Typography fontSize={12} color="error">
                 {dashboardData
-                  ? `${dashboardData?.performance?.minUser?.user?.first_name} ${dashboardData?.performance?.minUser?.user?.last_name} (${dashboardData?.performance?.minUser?.totalLeads})`
+                  ? `${dashboardData?.performance?.minUser?.user?.first_name} ${dashboardData?.performance?.minUser?.user?.last_name}`
                   : "No Data"}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* CHART */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Card sx={{ borderRadius: 3 }}>
+        {/* ZONAL CHART */}
+        <Grid item size={{ xs: 12, md: 12, lg: 8 }}>
+          <Card sx={{ borderRadius: 3, height: "100%" }}>
             <CardContent>
-              <Typography fontWeight={600}>{dashboardData?.filterMessage || ""}</Typography>
+              <Typography fontWeight={600}>
+                {dashboardData?.filterMessage || ""}
+              </Typography>
 
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={zonalData} layout="vertical">
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" />
-                  <Tooltip />
-                  <Bar dataKey="leads" fill="#10b981" />
-                  <Bar dataKey="conversions" fill="#2563eb" />
-                </BarChart>
-              </ResponsiveContainer>
+              <Box sx={{ width: "100%", height: 350 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={zonalData} layout="vertical">
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} />
+                    <Tooltip />
+                    <Bar dataKey="leads" fill="#10b981" />
+                    <Bar dataKey="conversions" fill="#2563eb" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
 
         {/* TABLE */}
-        <Grid size={{ xs: 12, md: 7, }} sx={{ height: "400px" }}>
+        <Grid item size={{ xs: 12 }}>
           <Card sx={{ borderRadius: 3 }}>
             <CardContent>
               <Typography fontWeight={600}>
-                Today{`&apos;`}s Lead
+                Today Leads
               </Typography>
 
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Lead Name</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Assigned</TableCell>
-                    <TableCell>Manager</TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {paginatedData.length === 0 ? (
+              <TableContainer sx={{ maxHeight: 350 }}>
+                <Table stickyHeader size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        No Data Found
-                      </TableCell>
+                      <TableCell>Lead Name</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Assigned</TableCell>
+                      <TableCell>Manager</TableCell>
                     </TableRow>
-                  ) : (
-                    paginatedData.map((row, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{row.name}</TableCell>
+                  </TableHead>
 
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: "inline-block",
-                              width: 10,
-                              height: 10,
-                              borderRadius: "50%",
-                              backgroundColor: row.color,
-                              mr: 1,
-                            }}
-                          />
-                          {row.status}
+                  <TableBody>
+                    {paginatedData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          No Data Found
                         </TableCell>
-
-                        <TableCell>{row.assigned}</TableCell>
-                        <TableCell>{row.reporting_manager}</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      paginatedData.map((row, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{row.name}</TableCell>
+                          <TableCell>{row.status}</TableCell>
+                          <TableCell>{row.assigned}</TableCell>
+                          <TableCell>{row.reporting_manager}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
-              {totalRows > 0 && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mt: 2,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Typography fontSize={12}>
-                    Showing {page * rowsPerPage + 1}–
-                    {Math.min((page + 1) * rowsPerPage, totalRows)} of{" "}
-                    {totalRows}
-                  </Typography>
-
-                  <Box>
-                    <Button
-                      size="small"
-                      disabled={page === 0}
-                      onClick={() => setPage((p) => p - 1)}
-                    >
-                      Prev
-                    </Button>
-
-                    <Button
-                      size="small"
-                      disabled={page >= totalPages - 1}
-                      onClick={() => setPage((p) => p + 1)}
-                    >
-                      Next
-                    </Button>
-                  </Box>
-                </Box>
-              )}
             </CardContent>
           </Card>
         </Grid>
 
       </Grid>
-    </Box >
+    </Box>
   );
 }

@@ -128,7 +128,7 @@ export default function DashboardUI() {
   }, []);
 
   return (
-    <PermissionGuardClient locale={lang} element="isCompany">
+    <PermissionGuardClient locale={lang} element="notUser">
 
       <Box sx={{ p: 4, bgcolor: "#f5f7fb", minHeight: "100vh" }}>
 

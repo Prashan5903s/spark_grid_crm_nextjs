@@ -144,14 +144,6 @@ const Notification = () => {
             header: 'subject',
             cell: ({ row }) => <Typography color='text.primary'>{row.original.subject}</Typography>
         }),
-        columnHelper.accessor('notification_type_name', {
-            header: 'Notification type',
-            cell: ({ row }) => <Typography color='text.primary'>{row.original.notification_type_name}</Typography>
-        }),
-        columnHelper.accessor('category_name', {
-            header: 'Category type',
-            cell: ({ row }) => <Typography color='text.primary'>{row.original.category_name}</Typography>
-        }),
         columnHelper.accessor('action', {
             header: 'Actions',
             cell: ({ row }) => (

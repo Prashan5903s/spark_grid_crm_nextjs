@@ -56,17 +56,6 @@ import CustomIconButton from '@core/components/mui/IconButton'
 import PermissionGuard from '@/hocs/PermissionClientGuard'
 import SkeletonFormComponent from '@/components/skeleton/form/page'
 
-function slugify(text) {
-  return text
-    ?.toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
 const EditorToolbar = ({ editor }) => {
   if (!editor) return null
 
@@ -110,7 +99,6 @@ const NotificationForm = () => {
 
   const [loading, setLoading] = useState(false)
   const [editData, setEditData] = useState()
-
 
   // Schema issue
 
@@ -230,14 +218,6 @@ const NotificationForm = () => {
         clearErrors();
       }
 
-      const formData = new FormData()
-
-      formData.append('template_name', values.template_name)
-      formData.append('subject', values.subject)
-      formData.append('message', values.message)
-      formData.append('default_select', values.default_select ? '1' : '0')
-      formData.append('schedule_days', values.schedule_days)
-
       const res = await fetch(
         id
           ? `${API_URL}/company/notification/update/${id}`
@@ -246,8 +226,9 @@ const NotificationForm = () => {
           method: id ? 'PUT' : 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
-          body: formData
+          body: JSON.stringify(values)
         }
       )
 
@@ -255,8 +236,9 @@ const NotificationForm = () => {
 
       if (!res.ok) throw new Error(result.message)
 
-      toast.success(`Notification ${id ? 'updated' : 'created'} successfully`)
-      router.push(`/${locale}/apps/admin/notification`)
+      toast.success(`Template ${id ? 'updated' : 'created'} successfully`)
+
+      router.push(`/${locale}/apps/admin/template`)
     } catch (e) {
       toast.error(e.message || 'Submission failed')
     }
@@ -329,7 +311,7 @@ const NotificationForm = () => {
           <Divider />
           <CardActions>
             <Button type="submit" variant="contained">Submit</Button>
-            <Button type="button" variant="tonal" color="error" onClick={() => router.push(`/${locale}/apps/admin/notification`)}>Cancel</Button>
+            <Button type="button" variant="tonal" color="error" onClick={() => router.push(`/${locale}/apps/admin/template`)}>Cancel</Button>
           </CardActions>
         </form>
       </Card>

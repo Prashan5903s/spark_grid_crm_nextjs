@@ -209,7 +209,7 @@ const Notification = () => {
 
               setSelectedTemplate(row.original)
               setIsTemplateModalOpen(true)
-              
+
               // your action here
             }}
           >
@@ -237,7 +237,7 @@ const Notification = () => {
     initialState: {
       pagination: {
         pageSize: 9
-      }
+      } 
     },
     enableRowSelection: true,
     globalFilterFn: fuzzyFilter,

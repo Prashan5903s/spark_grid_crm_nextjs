@@ -308,7 +308,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             <MenuItem key="Groups" href={`/${locale}/apps/group`} icon={<i className="tabler-users" />}>Groups</MenuItem>
           )}
           {permissArray?.isCompany && (
-            <MenuItem key="mail_log_data" href={`/${locale}/apps/mail/log`} icon={<i className="tabler-users" />}>Mail Log</MenuItem>
+            <MenuItem key="mail_log_data" href={`/${locale}/apps/mail/log`} icon={<i className="tabler-mail-opened" />}>Mail Log</MenuItem>
           )}
           {permissArray?.isCompany && (
             <SubMenu label={"Document management"} icon={<i className="tabler-file"></i>}>

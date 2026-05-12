@@ -172,12 +172,12 @@ const Notification = () => {
 
   const handleEditPermission = rowData => {
 
-    router.push(`/apps/admin/template/create/${rowData._id}`)
+    router.push(`/apps/admin/templates/create/${rowData._id}`)
 
   }
 
   const handleAddPermission = () => {
-    router.push('/apps/admin/template/create')
+    router.push('/apps/admin/templates/create')
   }
 
   const columns = useMemo(() => [
@@ -237,7 +237,7 @@ const Notification = () => {
     initialState: {
       pagination: {
         pageSize: 9
-      } 
+      }
     },
     enableRowSelection: true,
     globalFilterFn: fuzzyFilter,

@@ -238,7 +238,7 @@ const NotificationForm = () => {
 
       toast.success(`Template ${id ? 'updated' : 'created'} successfully`)
 
-      router.push(`/${locale}/apps/admin/template`)
+      router.push(`/${locale}/apps/admin/templates`)
     } catch (e) {
       toast.error(e.message || 'Submission failed')
     }
@@ -311,7 +311,7 @@ const NotificationForm = () => {
           <Divider />
           <CardActions>
             <Button type="submit" variant="contained">Submit</Button>
-            <Button type="button" variant="tonal" color="error" onClick={() => router.push(`/${locale}/apps/admin/template`)}>Cancel</Button>
+            <Button type="button" variant="tonal" color="error" onClick={() => router.push(`/${locale}/apps/admin/templates`)}>Cancel</Button>
           </CardActions>
         </form>
       </Card>

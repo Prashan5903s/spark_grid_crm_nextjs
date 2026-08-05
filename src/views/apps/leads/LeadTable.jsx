@@ -37,6 +37,8 @@ import {
   getSortedRowModel
 } from '@tanstack/react-table'
 
+import * as XLSX from "xlsx";
+
 // // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import TablePaginationComponent from '@components/TablePaginationComponent'
@@ -738,6 +740,66 @@ export default function LeadsPage({
     setOpen(false)
   }
 
+  const handleExportExcel = () => {
+    let exportData = [];
+
+    if (view === "table") {
+      // Export visible table data
+      exportData = finalData || tableData;
+    } else {
+      // Export all leads from kanban columns
+      const kanbanData = finalData || tableData;
+
+      exportData = (kanbanData || []).flatMap(column =>
+        (column.leads || []).map(lead => ({
+          ...lead,
+          kanban_status: column?.status?.title || ""
+        }))
+      );
+    }
+
+    const excelData = exportData.map((lead, index) => ({
+      "S.No": index + 1,
+      Name: lead.name || "",
+      Email: lead.email || "",
+      Phone: lead.phone || "",
+      Company: lead.company_name || "",
+
+      "Average Monthly Consumption":
+        lead.average_monthly_consumption ?? "",
+
+      "Sanctioned Load":
+        lead.sanctioned_load ?? "",
+
+      "No of Follow Up":
+        lead.followUp?.length || 0,
+
+      "Follow up date": lead.followUp?.length > 0 ? formatTime(lead.followUp[0]?.follow_up_date) : "",
+      Status:
+        view === "kanban"
+          ? lead.kanban_status
+          : lead?.lead_status?.status?.title || "",
+
+      Source: lead?.source?.title || "",
+
+      Solution: lead?.solution?.title || "",
+
+      Converted: lead.is_converted ? "Yes" : "No",
+
+      "Created At": formatTime(lead.created_at)
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+
+    XLSX.writeFile(
+      wb,
+      view === "kanban" ? "Leads.xlsx" : "Leads.xlsx"
+    );
+  };
+
   return (
     <Card className="rounded-2xl shadow-sm">
 
@@ -746,8 +808,14 @@ export default function LeadsPage({
         <Typography variant="h5" className="font-semibold">Leads</Typography>
 
         <div className="flex flex-wrap gap-2">
-          {/* <Button variant="outlined" startIcon={<i className="tabler-download" />}>Export</Button>
-          <Button variant="outlined" startIcon={<i className="tabler-upload" />}>Import</Button> */}
+          <Button
+            variant="outlined"
+            startIcon={<i className="tabler-download" />}
+            onClick={handleExportExcel}
+          >
+            Export Excel
+          </Button>
+          {/* <Button variant="outlined" startIcon={<i className="tabler-upload" />}>Import</Button> */}
           <Button
             variant="contained"
             startIcon={<i className="tabler-plus" />}

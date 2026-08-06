@@ -1,34 +1,305 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Spark Grid CRM - Next.js
 
-## Getting Started
+A modern Customer Relationship Management (CRM) application built with **Next.js**, designed to manage customers, leads, employees, tasks, sales, and business operations through a responsive web interface.
 
-First, run the development server:
+---
+
+## 🚀 Tech Stack
+
+- **Framework:** Next.js
+- **Language:** JavaScript / TypeScript
+- **UI:** Material UI (MUI)
+- **Authentication:** JWT / NextAuth (if configured)
+- **API:** REST API
+- **State Management:** React Hooks / Context API
+- **HTTP Client:** Axios
+- **Styling:** CSS / SCSS / Tailwind (Project dependent)
+- **Deployment:** Vercel / Linux Server
+
+---
+
+# Features
+
+- 🔐 Secure Authentication
+- 👥 User & Role Management
+- 🏢 Customer Management
+- 📞 Lead Management
+- 📋 Task Management
+- 📊 Dashboard Analytics
+- 📈 Sales Reports
+- 📁 Document Management
+- 🔔 Notifications
+- 📱 Responsive Design
+- 🌐 Multi-language Support (if enabled)
+- ⚡ Optimized Performance
+
+---
+
+# Project Structure
+
+```
+.
+├── public/
+├── src/
+│   ├── app/
+│   ├── components/
+│   ├── hooks/
+│   ├── services/
+│   ├── utils/
+│   ├── contexts/
+│   ├── layouts/
+│   ├── styles/
+│   └── assets/
+├── package.json
+├── next.config.js
+└── README.md
+```
+
+---
+
+# Prerequisites
+
+Before starting, install:
+
+- Node.js >= 18
+- npm or yarn
+- Git
+
+---
+
+# Installation
+
+Clone the repository
+
+```bash
+git clone <repository-url>
+```
+
+Go inside project
+
+```bash
+cd spark-grid-crm-nextjs
+```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+or
+
+```bash
+yarn install
+```
+
+---
+
+# Environment Variables
+
+Create a `.env.local` file.
+
+```env
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_SOCKET_URL=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=
+```
+
+Add other environment variables as required by your backend.
+
+---
+
+# Running Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+---
 
-## Learn More
+# Build for Production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Start production server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```bash
+npm start
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Available Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+| Command | Description |
+|----------|-------------|
+| npm run dev | Start development server |
+| npm run build | Create production build |
+| npm start | Start production server |
+| npm run lint | Run ESLint |
+
+---
+
+# Authentication Flow
+
+```
+Login
+      │
+      ▼
+API Authentication
+      │
+      ▼
+Receive Access Token
+      │
+      ▼
+Store Session
+      │
+      ▼
+Access Protected Routes
+```
+
+---
+
+# API Communication
+
+The frontend communicates with backend REST APIs using Axios.
+
+Typical flow:
+
+```
+Component
+     │
+     ▼
+Axios Service
+     │
+     ▼
+REST API
+     │
+     ▼
+Backend Response
+     │
+     ▼
+Update UI
+```
+
+---
+
+# Folder Description
+
+| Folder | Purpose |
+|---------|----------|
+| app | App Router Pages |
+| components | Reusable UI Components |
+| services | API Calls |
+| hooks | Custom React Hooks |
+| contexts | Global Context |
+| layouts | Layout Components |
+| utils | Utility Functions |
+| assets | Images, Icons |
+| styles | CSS / SCSS |
+
+---
+
+# Deployment
+
+Generate production build
+
+```bash
+npm run build
+```
+
+Deploy to:
+
+- Vercel
+- Nginx
+- Apache
+- Docker
+
+---
+
+# Best Practices
+
+- Keep components reusable.
+- Store API calls inside services.
+- Never expose secrets.
+- Use environment variables.
+- Follow ESLint rules.
+- Optimize images.
+- Use lazy loading where applicable.
+
+---
+
+# Troubleshooting
+
+## Module not found
+
+```bash
+rm -rf node_modules
+npm install
+```
+
+## Clear Next Cache
+
+```bash
+rm -rf .next
+npm run dev
+```
+
+## Build Issues
+
+```bash
+npm run build
+```
+
+Review console errors and resolve any TypeScript or ESLint issues.
+
+---
+
+# Contributing
+
+1. Create a feature branch.
+
+```bash
+git checkout -b feature/new-feature
+```
+
+2. Commit changes.
+
+```bash
+git commit -m "Add new feature"
+```
+
+3. Push branch.
+
+```bash
+git push origin feature/new-feature
+```
+
+4. Create a Pull Request.
+
+---
+
+# License
+
+This project is proprietary and intended for internal use unless otherwise specified.
+
+---
+
+# Author
+
+**Spark Grid CRM Development Team**
+
+---
+
+## Version
+
+**v1.0.0**
